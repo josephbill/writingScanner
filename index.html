@@ -10,40 +10,38 @@
    <div id="you-qr-result"></div>
    <h1>Scan QR HTML</h1>
    <div style="display: flex; justify-content: center;">
-        <div id="my-qr-reader" style="width: 500px;">
-
-        </div>
+        <div id="my-qr-reader" style="width: 500px;"></div>
    </div>
-   <script src="https://unpkg.com/html5-qrcode"></script>
    <script>
       function domReady(fn){
         if(document.readyState === "complete" || document.readyState === "interactive"){
-             setTimeout(fn,1)
+             setTimeout(fn, 1)
         } else {
             document.addEventListener("DOMContentLoaded", fn)
         }
       }
 
       domReady(function(){
-        const myqr = document.getElementById("you-qr-result")
+        const myqr = document.getElementById("you-qr-result");
         let lastResult, countResults = 0;
-        //if you found the QR CODE 
-        function onScanSuccess(decodeText,decodeResult){
-               if(decodeResult !== lastResult){
-                ++countResults
-                lastResult = decodeText
 
-                alert("QR reads " + decodeText.decodeResult )
-                myqr.innerHTML = `scans ${countResults} : ${decodeText}`
-               }
+        function onScanSuccess(decodeText, decodeResult){
+            if (decodeText !== lastResult){
+                ++countResults;
+                lastResult = decodeText;
+
+                // Display the decoded result
+                alert("QR reads: " + decodeText);
+                myqr.innerHTML = `Scans ${countResults}: ${decodeText}`;
+            }
         }
-        // and last render the camera 
-        const htmlScanner  = new HTML5QrcodeScanner(
-            "my-qr-reader" , {fps: 10, qrbox:250}
-         )
-         htmlScanner.render(onScanSuccess)
 
-      })
+        // Render the QR scanner
+        const htmlScanner = new HTML5QrcodeScanner(
+            "my-qr-reader", { fps: 10, qrbox: 250 }
+        );
+        htmlScanner.render(onScanSuccess);
+      });
    </script>
 </body>
 </html>

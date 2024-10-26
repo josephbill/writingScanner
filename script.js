@@ -80,7 +80,7 @@ domReady(function () {
                             Created At: ${data.details.fulfillment.created_at}
                         `;
                     } else {
-                        detailsParagraph.innerHTML += `<br><strong>Error:</strong> ${data.message || 'Unknown error in fulfillment processing.'}`;
+                        detailsParagraph.innerHTML += `<br><strong>Error:</strong> ${data.message || 'Ticket indicated as fulfiled.'}`;
                     }
                 })
                 .catch(error => {

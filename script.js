@@ -63,7 +63,7 @@ fetch(url, requestOptions)
       console.log('Created At:', fulfillment.created_at);
       // Process further details as required
     } else {
-      console.error('Error in response:', data.message || 'Unknown error');
+      alert('Error in response:', data.message || 'Unknown error');
       alert("Error")
     }
   })

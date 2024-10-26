@@ -33,7 +33,8 @@ domReady(function () {
                 localStorage.setItem("order_number", orderNumber);
                 localStorage.setItem("product_id", productId);
     
-                alert("Order details saved in localStorage!");
+                //alert("Order details saved in localStorage!");
+                alert("processing")
                 // Define the request options
                const requestOptions = {
                method: 'POST', // or PUT depending on your API's method
@@ -52,7 +53,7 @@ fetch(url, requestOptions)
   .then(data => {
     if (data.details && data.details.fulfillment) {
       console.log('Fulfillment processed:', data.details.fulfillment);
-      
+      alert("Fulfilment Process")
       // You can now access the fulfillment details like so:
       const fulfillment = data.details.fulfillment;
       console.log('Fulfillment ID:', fulfillment.id);
@@ -63,6 +64,7 @@ fetch(url, requestOptions)
       // Process further details as required
     } else {
       console.error('Error in response:', data.message || 'Unknown error');
+      alert("Error")
     }
   })
   .catch(error => {

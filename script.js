@@ -26,11 +26,13 @@ domReady(function () {
 
         // Create or update a paragraph to display the combined details
         let detailsParagraph = document.getElementById("order-details");
+        const herePara = document.getElementById("herePara")
         if (!detailsParagraph) {
             // Create the paragraph if it doesn't exist
             detailsParagraph = document.createElement("p");
             detailsParagraph.id = "order-details";
-            document.body.appendChild(detailsParagraph);
+            // document.body.appendChild(detailsParagraph);
+            herePara.appendChild(detailsParagraph)
         }
 
         // Check if the extracted values are valid

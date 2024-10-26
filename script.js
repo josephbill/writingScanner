@@ -34,6 +34,41 @@ domReady(function () {
                 localStorage.setItem("product_id", productId);
     
                 alert("Order details saved in localStorage!");
+                // Define the request options
+               const requestOptions = {
+               method: 'POST', // or PUT depending on your API's method
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ order_id: orderId }) // Send order_id in the request body
+  }; 
+
+// URL of the API endpoint
+const url = 'https://adverteyez.onrender.com/fulfill_order'; // Replace with the correct API endpoint
+
+// Perform the fetch operation
+fetch(url, requestOptions)
+  .then(response => response.json()) // Parse the JSON response
+  .then(data => {
+    if (data.details && data.details.fulfillment) {
+      console.log('Fulfillment processed:', data.details.fulfillment);
+      
+      // You can now access the fulfillment details like so:
+      const fulfillment = data.details.fulfillment;
+      console.log('Fulfillment ID:', fulfillment.id);
+      console.log('Order ID:', fulfillment.order_id);
+      console.log('Status:', fulfillment.status);
+      console.log('Line Items:', fulfillment.line_items);
+      console.log('Created At:', fulfillment.created_at);
+      // Process further details as required
+    } else {
+      console.error('Error in response:', data.message || 'Unknown error');
+    }
+  })
+  .catch(error => {
+    console.error('Request failed:', error);
+  });
+
             } else {
                 alert("Failed to extract order details from the QR code.");
             }

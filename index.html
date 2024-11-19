@@ -14,13 +14,24 @@
 
 <body>
     <div class="container">
-        <div id="herePara">
-
-        </div>
+     
         <h1>Scan QR Codes</h1>
         <div class="section">
-            <div id="my-qr-reader">
-            </div>
+            <!-- Modal Structure -->
+<div id="scanModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h4>Scanned Order Details</h4>
+        <p id="modal-order-details">Loading...</p>
+    </div>
+    <div class="modal-footer">
+        <button id="fulfill-btn" class="btn btn-success">Fulfill</button>
+        <button id="cancel-btn" class="btn btn-danger">Cancel</button>
+    </div>
+</div>
+
+<!-- Place a div for the QR Code scanner -->
+<div id="my-qr-reader"></div>
+<div id="herePara"></div>
         </div>
     </div>
     <script

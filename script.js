@@ -71,9 +71,9 @@
                 cancelBtn.onclick = () => {
                     modal.style.display = "none";
                 };
-            } else if(orderNumber === 'mpesa'){
+            } else if(orderNumber.toLowerCase()  === 'mpesa'){
                 alert("Mpesa Payment. Ticket Verified")
-            } else if(orderNumber === 'complimentary'){
+            } else if(orderNumber.toLowerCase()  === 'complimentary'){
                 alert("This is a complimentary issued ticket. Ticket Verified")
             } else {
                 alert("Failed to extract order details from the QR code.");

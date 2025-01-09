@@ -56,7 +56,7 @@
                             if (data.details && data.details.fulfillment) {
                                 alert(`Fulfillment Processed:\nStatus: ${data.details.fulfillment.status}`);
                             } else {
-                                alert(`${data.message || "Ticket fulfillment done. Check admin page for ticket count." || data.details.fulfillment.status}`);
+                                alert(`${orderNumber}  : ${data.message || "Ticket fulfillment is already active. Check admin page for ticket count/ verification." || data.details.fulfillment.status}`);
                             }
                         })
                         .catch((error) => {
@@ -71,8 +71,11 @@
                 cancelBtn.onclick = () => {
                     modal.style.display = "none";
                 };
+            } else if(orderNumber === 'mpesa'){
+                alert("Mpesa Payment. Ticket Verified")
+            } else if(orderNumber === 'complimentary'){
+                alert("This is a complimentary issued ticket. Ticket Verified")
             } else {
-                alert(orderNumber)
                 alert("Failed to extract order details from the QR code.");
             }
         }

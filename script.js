@@ -12,7 +12,7 @@
     domReady(function () {
         function onScanSuccess(decodeText, decodeResult) {
             console.log("Your QR code data: " + decodeText, decodeResult);
-            alert("Your QR code data: " + decodeText, decodeResult)
+            // alert("Your QR code data: " + decodeText, decodeResult)
             const orderId = decodeText.match(/Order ID:\s*(\d+)/)?.[1];
             const orderNumber = decodeText.match(/Order Number:\s*([a-zA-Z0-9]+)/)?.[1];
             const productId = decodeText.match(/Product ID:\s*(\d+)/)?.[1];

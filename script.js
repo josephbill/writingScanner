@@ -72,6 +72,7 @@
                     modal.style.display = "none";
                 };
             } else {
+                alert(orderNumber)
                 alert("Failed to extract order details from the QR code.");
             }
         }

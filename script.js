@@ -56,7 +56,7 @@
                             if (data.details && data.details.fulfillment) {
                                 alert(`Fulfillment Processed:\nStatus: ${data.details.fulfillment.status}`);
                             } else {
-                                alert(`Error: ${data.message || "Unknown error occurred. Check admin page for ticket count" || data.details.fulfillment.status}`);
+                                alert(`${data.message || "Ticket fulfillment done. Check admin page for ticket count." || data.details.fulfillment.status}`);
                             }
                         })
                         .catch((error) => {

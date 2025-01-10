@@ -15,7 +15,10 @@
             alert("Your QR code data: " + decodeText, decodeResult)
             const orderId = decodeText.match(/Order ID:\s*(\d+)/)?.[1];
             const orderNumber = decodeText.match(/Order Number:\s*([a-zA-Z0-9]+)/)?.[1];
+            const firstName = decodeText.match(/First Name:\s*([a-zA-Z0-9]+)/)?.[1];
             const productId = decodeText.match(/Product ID:\s*(\d+)/)?.[1];
+
+            alert(firstName)
 
             if (orderId && orderNumber && productId) {
                 localStorage.setItem("order_id", orderId);

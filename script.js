@@ -84,7 +84,7 @@
                   }
 
  // Making the POST request to the server
- fetch('http://127.0.0.1:5000/create_ticket_attendance', {
+ fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json' // Tell the server we're sending JSON data
@@ -115,7 +115,7 @@
                   }
 
  // Making the POST request to the server
- fetch('http://127.0.0.1:5000/create_ticket_attendance', {
+ fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json' // Tell the server we're sending JSON data

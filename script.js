@@ -95,9 +95,12 @@
   .then(result => {
     if (result.success) {
       console.log('Mpesa fulfilled.', result);
+      alert(result.message)
       // Do something with the result if needed
     } else {
       console.error('Error:', result.message);
+      alert(result.message)
+
       // Handle error if request fails
     }
   })
@@ -126,9 +129,13 @@
   .then(result => {
     if (result.success) {
       console.log('Complimentary recorded:', result);
+      alert(result.message)
+
       // Do something with the result if needed
     } else {
       console.error('Error:', result.message);
+      alert(result.message)
+
       // Handle error if request fails
     }
   })

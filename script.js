@@ -58,8 +58,73 @@
                         .then((data) => {
                             if (data.details && data.details.fulfillment) {
                                 alert(`Fulfillment Processed:\nStatus: ${data.details.fulfillment.status}`);
+                                //update record as a scanned detail
+                                     // submitting fulfillment 
+                const data_shopify = {
+                    "first_name": firstName,
+                    "order_number": orderNumber,
+                    "status" : "fulfilled"
+                  }
+                                 // Making the POST request to the server
+ fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json' // Tell the server we're sending JSON data
+    },
+    body: JSON.stringify(data_shopify) // Convert JavaScript object to JSON string
+  })
+  .then(response => response.json()) // Convert the response to JSON
+  .then(result => {
+    if (result.success) {
+      console.log('Shopify order fulfilled.', result);
+      alert(result.message)
+      // Do something with the result if needed
+    } else {
+      console.error('Error:', result.message);
+      alert(result.message)
+
+      // Handle error if request fails
+    }
+  })
+  .catch(error => {
+    console.error('Request failed:', error);
+    // Handle network or other errors
+  }); 
+
                             } else {
                                 alert(`${orderNumber}  : ${data.message || "Ticket fulfillment is already active. Check admin page for ticket count/ verification." || data.details.fulfillment.status}`);
+                                                               // submitting fulfillment 
+                const data_shopify_error = {
+                    "first_name": firstName,
+                    "order_number": orderNumber,
+                    "status" : "fulfilled"
+                  }
+                                 // Making the POST request to the server
+ fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json' // Tell the server we're sending JSON data
+    },
+    body: JSON.stringify(data_shopify_error) // Convert JavaScript object to JSON string
+  })
+  .then(response => response.json()) // Convert the response to JSON
+  .then(result => {
+    if (result.success) {
+      console.log('Shopify order fulfilled. Multiple order fulfillment', result);
+      alert('Shopify order fulfilled. Multiple order fulfillment')
+      // Do something with the result if needed
+    } else {
+      console.error('Error:', result.message);
+      alert(result.message)
+
+      // Handle error if request fails
+    }
+  })
+  .catch(error => {
+    console.error('Request failed:', error);
+    // Handle network or other errors
+  }); 
+
                             }
                         })
                         .catch((error) => {

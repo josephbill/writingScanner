@@ -197,6 +197,7 @@ console.error('Request failed:', error);
           const data_mpesa = {
             "first_name": firstName + " " + lastname,
             "order_number": orderNumber,
+            "order_id" : 1,
             "quantity" : quantity,
             "prod_title" : prod_title,
             "status" : "fulfilled"
@@ -269,6 +270,7 @@ console.error('Request failed:', error);
           const data_complimentary = {
             "first_name": firstName + " " + lastname,
             "order_number": orderNumber,
+            "order_id" : 1,
             "quantity" : quantity,
             "prod_title" : prod_title,
             "status" : "fulfilled"

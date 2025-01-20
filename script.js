@@ -16,7 +16,11 @@
             const orderId = decodeText.match(/Order ID:\s*(\d+)/)?.[1];
             const orderNumber = decodeText.match(/Order Number:\s*([a-zA-Z0-9]+)/)?.[1];
             const firstName = decodeText.match(/First Name:\s*([a-zA-Z0-9]+)/)?.[1];
+            const lastname = decodeText.match(/Last Name:\s*([a-zA-Z0-9]+)/)?.[1];
+            const quantity = decodeText.match(/Quantity:\s*([a-zA-Z0-9]+)/)?.[1];
+            const prod_title = decodeText.match(/Product Title:\s*([a-zA-Z0-9]+)/)?.[1];
             const productId = decodeText.match(/Product ID:\s*(\d+)/)?.[1];
+
 
             // alert(firstName)
 
@@ -30,7 +34,10 @@
                 modalDetails.innerHTML = `
                     <strong>Order ID:</strong> ${orderId}<br>
                     <strong>Order Number:</strong> ${orderNumber}<br>
-                    <strong>Product ID:</strong> ${productId}
+                    <strong>Product ID:</strong> ${productId}<br>
+                    <strong>Product Title:</strong> ${prod_title}<br>
+                    <strong>Order Name:</strong> ${firstName} ${lastname}<br>
+                    <strong>Quantity:</strong> ${quantity}
                 `;
 
                 // Show modal
@@ -63,8 +70,11 @@
                                      // here add more details to the order submission in ticket_attendance 
                                      // TODO : also update model on backend  
                 const data_shopify = {
-                    "first_name": firstName,
+                    "first_name": firstName + " " + lastname,
                     "order_number": orderNumber,
+                    "order_id" : orderId,
+                    "quantity" : quantity,
+                    "prod_title" : prod_title,
                     "status" : "fulfilled"
                   }
                                  // Making the POST request to the server
@@ -98,17 +108,23 @@
                                                                // submitting fulfillment
                                                                // add more details as indicated above  
                 const data_shopify_error = {
-                    "first_name": firstName,
-                    "order_number": orderNumber,
-                    "status" : "fulfilled"
+                  "first_name": firstName + " " + lastname,
+                  "order_number": orderNumber,
+                  "order_id" : orderId,
+                  "quantity" : quantity,
+                  "prod_title" : prod_title,
+                  "status" : "fulfilled"
                   }
                   // here add a confirm window popup , for count check. 
                    // Populate modal with details
                 const modalDetails = document.getElementById("modal-order-details");
                 modalDetails.innerHTML = `
-                    <strong>Order ID:</strong> ${orderId}<br>
-                    <strong>Order Number:</strong> ${orderNumber}<br>
-                    <strong>Product ID:</strong> ${productId}
+                <strong>Order ID:</strong> ${orderId}<br>
+                <strong>Order Number:</strong> ${orderNumber}<br>
+                <strong>Product ID:</strong> ${productId}<br>
+                <strong>Product Title:</strong> ${prod_title}<br>
+                <strong>Order Name:</strong> ${firstName} ${lastname}<br>
+                <strong>Quantity:</strong> ${quantity}
                 `;
 
                 // Show modal
@@ -133,12 +149,15 @@
 .then(response => response.json()) // Convert the response to JSON
 .then(result => {
   if (result.success) {
-    console.log('Shopify order fulfilled. Multiple order fulfillment', result);
+    // console.log('Shopify order fulfilled. Multiple order fulfillment', result);
     alert('Shopify order fulfilled. Multiple order fulfillment')
+    modal.style.display = "none";
+
     // Do something with the result if needed
   } else {
     console.error('Error:', result.message);
     alert(result.message)
+    modal.style.display = "none";
 
     // Handle error if request fails
   }
@@ -147,7 +166,6 @@
   console.error('Request failed:', error);
   // Handle network or other errors
 }); 
-modal.style.display = "none";
 
                 })
 
@@ -175,17 +193,23 @@ modal.style.display = "none";
                 alert("Mpesa Payment. Ticket Verified")
                 // submitting fulfillment 
                 const data_mpesa = {
-                    "first_name": firstName,
-                    "order_number": orderNumber,
-                    "status" : "fulfilled"
+                  "first_name": firstName + " " + lastname,
+                  "order_number": orderNumber,
+                  "order_id" : orderId,
+                  "quantity" : quantity,
+                  "prod_title" : prod_title,
+                  "status" : "fulfilled"
                   }
 
                   const modalDetails = document.getElementById("modal-order-details");
                   modalDetails.innerHTML = `
-                      <strong>Order ID:</strong> ${orderId}<br>
-                      <strong>Order Number:</strong> ${orderNumber}<br>
-                      <strong>Product ID:</strong> ${productId}
-                  `;
+                  <strong>Order ID:</strong> ${orderId}<br>
+                  <strong>Order Number:</strong> ${orderNumber}<br>
+                  <strong>Product ID:</strong> ${productId}<br>
+                  <strong>Product Title:</strong> ${prod_title}<br>
+                  <strong>Order Name:</strong> ${firstName} ${lastname}<br>
+                  <strong>Quantity:</strong> ${quantity}
+              `;
   
                   // Show modal
                   const modal = document.getElementById("scanModal");
@@ -212,10 +236,13 @@ fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
   if (result.success) {
     console.log('Mpesa fulfilled.', result);
     alert(result.message)
+    modal.style.display = "none";
+
     // Do something with the result if needed
   } else {
     console.error('Error:', result.message);
     alert(result.message)
+    modal.style.display = "none";
 
     // Handle error if request fails
   }
@@ -224,7 +251,6 @@ fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
   console.error('Request failed:', error);
   // Handle network or other errors
 }); 
-  modal.style.display = "none";
   
                   })
   
@@ -239,17 +265,23 @@ fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
                 alert("This is a complimentary issued ticket. Ticket Verified")
 
                 const data_complimentary = {
-                    "first_name": firstName,
-                    "order_number": orderNumber,
-                    "status" : "fulfilled"
+                  "first_name": firstName + " " + lastname,
+                  "order_number": orderNumber,
+                  "order_id" : orderId,
+                  "quantity" : quantity,
+                  "prod_title" : prod_title,
+                  "status" : "fulfilled"
                   }
 
                   const modalDetails = document.getElementById("modal-order-details");
                   modalDetails.innerHTML = `
-                      <strong>Order ID:</strong> ${orderId}<br>
-                      <strong>Order Number:</strong> ${orderNumber}<br>
-                      <strong>Product ID:</strong> ${productId}
-                  `;
+                  <strong>Order ID:</strong> ${orderId}<br>
+                  <strong>Order Number:</strong> ${orderNumber}<br>
+                  <strong>Product ID:</strong> ${productId}<br>
+                  <strong>Product Title:</strong> ${prod_title}<br>
+                  <strong>Order Name:</strong> ${firstName} ${lastname}<br>
+                  <strong>Quantity:</strong> ${quantity}
+              `;
   
                   // Show modal
                   const modal = document.getElementById("scanModal");
@@ -276,12 +308,12 @@ fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
   if (result.success) {
     console.log('Complimentary recorded:', result);
     alert(result.message)
-
+    modal.style.display = "none";
     // Do something with the result if needed
   } else {
     console.error('Error:', result.message);
     alert(result.message)
-
+    modal.style.display = "none";
     // Handle error if request fails
   }
 })
@@ -289,7 +321,6 @@ fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
   console.error('Request failed:', error);
   // Handle network or other errors
 });
-  modal.style.display = "none";
   
                   })
   

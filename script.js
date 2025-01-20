@@ -12,7 +12,7 @@
     domReady(function () {
         function onScanSuccess(decodeText, decodeResult) {
             console.log("Your QR code data: " + decodeText, decodeResult);
-            // alert("Your QR code data: " + decodeText, decodeResult)
+            alert("Your QR code data: " + decodeText, decodeResult)
             const orderId = decodeText.match(/Order ID:\s*(\d+)/)?.[1];
             const orderNumber = decodeText.match(/Order Number:\s*([a-zA-Z0-9]+)/)?.[1];
             const firstName = decodeText.match(/First Name:\s*([a-zA-Z0-9]+)/)?.[1];
@@ -59,7 +59,9 @@
                             if (data.details && data.details.fulfillment) {
                                 alert(`Fulfillment Processed:\nStatus: ${data.details.fulfillment.status}`);
                                 //update record as a scanned detail
-                                     // submitting fulfillment 
+                                     // submitting fulfillment
+                                     // here add more details to the order submission in ticket_attendance 
+                                     // TODO : also update model on backend  
                 const data_shopify = {
                     "first_name": firstName,
                     "order_number": orderNumber,
@@ -93,39 +95,69 @@
 
                             } else {
                                 alert(`${orderNumber}  : ${data.message || "Ticket fulfillment is already active. Check admin page for ticket count/ verification." || data.details.fulfillment.status}`);
-                                                               // submitting fulfillment 
+                                                               // submitting fulfillment
+                                                               // add more details as indicated above  
                 const data_shopify_error = {
                     "first_name": firstName,
                     "order_number": orderNumber,
                     "status" : "fulfilled"
                   }
+                  // here add a confirm window popup , for count check. 
+                   // Populate modal with details
+                const modalDetails = document.getElementById("modal-order-details");
+                modalDetails.innerHTML = `
+                    <strong>Order ID:</strong> ${orderId}<br>
+                    <strong>Order Number:</strong> ${orderNumber}<br>
+                    <strong>Product ID:</strong> ${productId}
+                `;
+
+                // Show modal
+                const modal = document.getElementById("scanModal");
+                modal.style.display = "block";
+
+                // Handle button clicks
+                const fulfillBtn = document.getElementById("fulfill-btn");
+                fulfillBtn.textContent = "Mark Attendance"
+                const cancelBtn = document.getElementById("cancel-btn");
+
+                fulfillBtn.addEventListener('click', function () {
+                     
                                  // Making the POST request to the server
  fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json' // Tell the server we're sending JSON data
-    },
-    body: JSON.stringify(data_shopify_error) // Convert JavaScript object to JSON string
-  })
-  .then(response => response.json()) // Convert the response to JSON
-  .then(result => {
-    if (result.success) {
-      console.log('Shopify order fulfilled. Multiple order fulfillment', result);
-      alert('Shopify order fulfilled. Multiple order fulfillment')
-      // Do something with the result if needed
-    } else {
-      console.error('Error:', result.message);
-      alert(result.message)
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json' // Tell the server we're sending JSON data
+  },
+  body: JSON.stringify(data_shopify_error) // Convert JavaScript object to JSON string
+})
+.then(response => response.json()) // Convert the response to JSON
+.then(result => {
+  if (result.success) {
+    console.log('Shopify order fulfilled. Multiple order fulfillment', result);
+    alert('Shopify order fulfilled. Multiple order fulfillment')
+    // Do something with the result if needed
+  } else {
+    console.error('Error:', result.message);
+    alert(result.message)
 
-      // Handle error if request fails
-    }
-  })
-  .catch(error => {
-    console.error('Request failed:', error);
-    // Handle network or other errors
-  }); 
+    // Handle error if request fails
+  }
+})
+.catch(error => {
+  console.error('Request failed:', error);
+  // Handle network or other errors
+}); 
+modal.style.display = "none";
 
-                            }
+                })
+
+                // cancel button 
+                cancelBtn.addEventListener('click', function(){
+                  modal.style.display = "none";
+                })
+
+
+                }
                         })
                         .catch((error) => {
                             console.error("Request failed:", error);
@@ -148,31 +180,61 @@
                     "status" : "fulfilled"
                   }
 
- // Making the POST request to the server
- fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json' // Tell the server we're sending JSON data
-    },
-    body: JSON.stringify(data_mpesa) // Convert JavaScript object to JSON string
-  })
-  .then(response => response.json()) // Convert the response to JSON
-  .then(result => {
-    if (result.success) {
-      console.log('Mpesa fulfilled.', result);
-      alert(result.message)
-      // Do something with the result if needed
-    } else {
-      console.error('Error:', result.message);
-      alert(result.message)
+                  const modalDetails = document.getElementById("modal-order-details");
+                  modalDetails.innerHTML = `
+                      <strong>Order ID:</strong> ${orderId}<br>
+                      <strong>Order Number:</strong> ${orderNumber}<br>
+                      <strong>Product ID:</strong> ${productId}
+                  `;
+  
+                  // Show modal
+                  const modal = document.getElementById("scanModal");
+                  modal.style.display = "block";
+  
+                  // Handle button clicks
+                  const fulfillBtn = document.getElementById("fulfill-btn");
+                  fulfillBtn.textContent = "Mark Attendance"
+                  const cancelBtn = document.getElementById("cancel-btn");
+  
+                  fulfillBtn.addEventListener('click', function () {
+                       
+                                   // Making the POST request to the server
+// Making the POST request to the server
+fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json' // Tell the server we're sending JSON data
+  },
+  body: JSON.stringify(data_mpesa) // Convert JavaScript object to JSON string
+})
+.then(response => response.json()) // Convert the response to JSON
+.then(result => {
+  if (result.success) {
+    console.log('Mpesa fulfilled.', result);
+    alert(result.message)
+    // Do something with the result if needed
+  } else {
+    console.error('Error:', result.message);
+    alert(result.message)
 
-      // Handle error if request fails
-    }
-  })
-  .catch(error => {
-    console.error('Request failed:', error);
-    // Handle network or other errors
-  });                  
+    // Handle error if request fails
+  }
+})
+.catch(error => {
+  console.error('Request failed:', error);
+  // Handle network or other errors
+}); 
+  modal.style.display = "none";
+  
+                  })
+  
+                  // cancel button 
+                  cancelBtn.addEventListener('click', function(){
+                    modal.style.display = "none";
+                  })
+
+
+                  
             } else if(orderNumber.toLowerCase()  === 'complimentary'){
                 alert("This is a complimentary issued ticket. Ticket Verified")
 
@@ -182,32 +244,61 @@
                     "status" : "fulfilled"
                   }
 
+                  const modalDetails = document.getElementById("modal-order-details");
+                  modalDetails.innerHTML = `
+                      <strong>Order ID:</strong> ${orderId}<br>
+                      <strong>Order Number:</strong> ${orderNumber}<br>
+                      <strong>Product ID:</strong> ${productId}
+                  `;
+  
+                  // Show modal
+                  const modal = document.getElementById("scanModal");
+                  modal.style.display = "block";
+  
+                  // Handle button clicks
+                  const fulfillBtn = document.getElementById("fulfill-btn");
+                  fulfillBtn.textContent = "Mark Attendance"
+                  const cancelBtn = document.getElementById("cancel-btn");
+  
+                  fulfillBtn.addEventListener('click', function () {
+                       
+                                   // Making the POST request to the server
  // Making the POST request to the server
  fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json' // Tell the server we're sending JSON data
-    },
-    body: JSON.stringify(data_complimentary) // Convert JavaScript object to JSON string
-  })
-  .then(response => response.json()) // Convert the response to JSON
-  .then(result => {
-    if (result.success) {
-      console.log('Complimentary recorded:', result);
-      alert(result.message)
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json' // Tell the server we're sending JSON data
+  },
+  body: JSON.stringify(data_complimentary) // Convert JavaScript object to JSON string
+})
+.then(response => response.json()) // Convert the response to JSON
+.then(result => {
+  if (result.success) {
+    console.log('Complimentary recorded:', result);
+    alert(result.message)
 
-      // Do something with the result if needed
-    } else {
-      console.error('Error:', result.message);
-      alert(result.message)
+    // Do something with the result if needed
+  } else {
+    console.error('Error:', result.message);
+    alert(result.message)
 
-      // Handle error if request fails
-    }
-  })
-  .catch(error => {
-    console.error('Request failed:', error);
-    // Handle network or other errors
-  });
+    // Handle error if request fails
+  }
+})
+.catch(error => {
+  console.error('Request failed:', error);
+  // Handle network or other errors
+});
+  modal.style.display = "none";
+  
+                  })
+  
+                  // cancel button 
+                  cancelBtn.addEventListener('click', function(){
+                    modal.style.display = "none";
+                  })
+
+
                 
             } else {
                 alert("Failed to extract order details from the QR code.");

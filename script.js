@@ -32,7 +32,9 @@
                 // Populate modal with details
                 const modalDetails = document.getElementById("modal-order-details");
                 modalDetails.innerHTML = `
-                 
+                    <strong>Order ID:</strong> ${orderId}<br>
+                    <strong>Order Number:</strong> ${orderNumber}<br>
+                    <strong>Product ID:</strong> ${productId}<br>
                     <strong>Product Title:</strong> ${prod_title}<br>
                     <strong>Order Name:</strong> ${firstName} ${lastname}<br>
                     <strong>Quantity:</strong> ${quantity}
@@ -117,7 +119,9 @@
                    // Populate modal with details
                 const modalDetails = document.getElementById("modal-order-details");
                 modalDetails.innerHTML = `
-            
+                <strong>Order ID:</strong> ${orderId}<br>
+                <strong>Order Number:</strong> ${orderNumber}<br>
+                <strong>Product ID:</strong> ${productId}<br>
                 <strong>Product Title:</strong> ${prod_title}<br>
                 <strong>Order Name:</strong> ${firstName} ${lastname}<br>
                 <strong>Quantity:</strong> ${quantity}

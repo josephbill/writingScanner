@@ -12,7 +12,7 @@
     domReady(function () {
         function onScanSuccess(decodeText, decodeResult) {
             console.log("Your QR code data: " + decodeText, decodeResult);
-            alert("Your QR code data: " + decodeText, decodeResult)
+            // alert("Your QR code data: " + decodeText, decodeResult)
             const orderId = decodeText.match(/Order ID:\s*(\d+)/)?.[1];
             const orderNumber = decodeText.match(/Order Number:\s*([a-zA-Z0-9]+)/)?.[1];
             const firstName = decodeText.match(/First Name:\s*([a-zA-Z0-9]+)/)?.[1];
@@ -32,9 +32,7 @@
                 // Populate modal with details
                 const modalDetails = document.getElementById("modal-order-details");
                 modalDetails.innerHTML = `
-                    <strong>Order ID:</strong> ${orderId}<br>
-                    <strong>Order Number:</strong> ${orderNumber}<br>
-                    <strong>Product ID:</strong> ${productId}<br>
+                 
                     <strong>Product Title:</strong> ${prod_title}<br>
                     <strong>Order Name:</strong> ${firstName} ${lastname}<br>
                     <strong>Quantity:</strong> ${quantity}
@@ -119,9 +117,7 @@
                    // Populate modal with details
                 const modalDetails = document.getElementById("modal-order-details");
                 modalDetails.innerHTML = `
-                <strong>Order ID:</strong> ${orderId}<br>
-                <strong>Order Number:</strong> ${orderNumber}<br>
-                <strong>Product ID:</strong> ${productId}<br>
+            
                 <strong>Product Title:</strong> ${prod_title}<br>
                 <strong>Order Name:</strong> ${firstName} ${lastname}<br>
                 <strong>Quantity:</strong> ${quantity}

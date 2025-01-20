@@ -89,7 +89,7 @@ body: JSON.stringify(data_shopify) // Convert JavaScript object to JSON string
 .then(result => {
 if (result.success) {
   console.log('Shopify order fulfilled.', result);
-  alert(result.message)
+  window.location.reload()
   // Do something with the result if needed
 } else {
   console.error('Error:', result.message);
@@ -151,8 +151,8 @@ body: JSON.stringify(data_shopify_error) // Convert JavaScript object to JSON st
 if (result.success) {
 // console.log('Shopify order fulfilled. Multiple order fulfillment', result);
 alert('Shopify order fulfilled. Multiple order fulfillment')
+window.location.reload()
 modal.style.display = "none";
-
 // Do something with the result if needed
 } else {
 console.error('Error:', result.message);
@@ -236,12 +236,14 @@ body: JSON.stringify(data_mpesa) // Convert JavaScript object to JSON string
 if (result.success) {
 console.log('Mpesa fulfilled.', result);
 alert(result.message)
+window.location.reload()
 modal.style.display = "none";
 
 // Do something with the result if needed
 } else {
 console.error('Error:', result.message);
 alert(result.message)
+window.location.reload()
 modal.style.display = "none";
 
 // Handle error if request fails
@@ -308,11 +310,13 @@ body: JSON.stringify(data_complimentary) // Convert JavaScript object to JSON st
 if (result.success) {
 console.log('Complimentary recorded:', result);
 alert(result.message)
+window.location.reload()
 modal.style.display = "none";
 // Do something with the result if needed
 } else {
 console.error('Error:', result.message);
 alert(result.message)
+window.location.reload()
 modal.style.display = "none";
 // Handle error if request fails
 }

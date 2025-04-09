@@ -130,6 +130,47 @@
     font-weight: bold;
 }
 
+.search-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+#scan-search {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+#clear-search {
+    padding: 8px 12px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#clear-search:hover {
+    background: #e0e0e0;
+}
+
+.scan-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    margin: 5px 0;
+    background: #fff;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.scan-item.highlight {
+    background-color: #fffde7;
+    border-left: 4px solid #ffd600;
+}
+
 button {
     padding: 10px 20px;
     border: 1px solid #b2b2b2;

@@ -42,7 +42,7 @@ domReady(function () {
       currentOrder = order;
       ticketDetails.innerHTML = `
           <p><strong>Order:</strong> ${order.order_number}</p>
-          <p><strong>Name:</strong> ${order.first_name} ${order.lastname}</p>
+          <p><strong>Name:</strong> ${order.first_name} ${order.last_name}</p>
           <p><strong>Product:</strong> ${order.prod_title}</p>
           <p><strong>Quantity:</strong> ${order.quantity}</p>
           <p><strong>Status:</strong> <span class="status-${order.status.toLowerCase()}">${order.status}</span></p>

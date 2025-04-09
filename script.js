@@ -106,6 +106,8 @@ console.error('Request failed:', error);
 }); 
 
         } else {
+            alert(JSON.stringify(data))
+
     alert(`${orderNumber}  : ${data.message || "Ticket fulfillment is already active. Check admin page for ticket count/ verification. Proceed to Mark Attendance if valid." || data.details.fulfillment.status}`);
                                                          // submitting fulfillment
                                                          // add more details as indicated above  

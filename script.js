@@ -65,6 +65,7 @@ domReady(function () {
                   .then((data) => {
                      alert(JSON.stringify(data))
                       if (data.details && data.details.fulfillment) {
+                          alert(`Here is the remaining count: ${data.details.remaining} - here is the fulfilment status - ${data.details.status} - count of fulfilled - ${data.details.fulfilled} - quantity was :: ${quantity}`)
                           alert(`Fulfillment Processed:\nStatus: ${data.details.fulfillment.status}`);
                           //update record as a scanned detail
                                // submitting fulfillment

@@ -130,6 +130,24 @@
     font-weight: bold;
 }
 
+button {
+    padding: 10px 20px;
+    border: 1px solid #b2b2b2;
+    outline: none;
+    border-radius: 0.25em;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    background-color: #008000ad;
+    transition: 0.3s background-color;
+}
+
+button:hover {
+    background-color: #008000;
+}
+
 @media (max-width: 600px) {
     .container {
         padding: 10px;

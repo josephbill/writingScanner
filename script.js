@@ -124,6 +124,7 @@ clearSearch.addEventListener('click', () => {
 clearScans.addEventListener('click', () => {
     scanSearch.value = '';
     localStorage.removeItem("scannedTickets")
+    window.location.href = window.location.href;
 })
 
 // Add this to your initialization

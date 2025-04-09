@@ -1,72 +1,142 @@
-/* style.css file*/
-body {
-    display: flex;
-    justify-content: center;
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    box-sizing: border-box;
-    text-align: center;
-    background: #7c4094
-}
+/* Add these styles to your style.css */
 .container {
-    width: 100%;
-    max-width: 500px;
-    margin: 5px;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-.container h1 {
-    color: #ffffff;
-}
-
-.section {
-    background-color: #ffffff;
-    padding: 50px 30px;
-    border: 1.5px solid #b2b2b2;
-    border-radius: 0.25em;
-    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.25);
+.scanner-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 #my-qr-reader {
-    padding: 20px !important;
-    border: 1.5px solid #b2b2b2 !important;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.scan-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.indicator {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.indicator.idle {
+    background-color: #ccc;
+}
+
+.indicator.ready {
+    background-color: #4CAF50;
+}
+
+.indicator.processing {
+    background-color: #FFC107;
+    animation: pulse 1.5s infinite;
+}
+
+.indicator.success {
+    background-color: #4CAF50;
+}
+
+.indicator.error {
+    background-color: #F44336;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+#ticket-count {
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+#current-ticket, #recent-scans {
+    background: #f5f5f5;
+    padding: 15px;
     border-radius: 8px;
 }
 
-#my-qr-reader img[alt="Info icon"] {
+.ticket-details {
+    margin: 15px 0;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-success {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.btn-danger {
+    background-color: #F44336;
+    color: white;
+}
+
+.scan-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    margin: 5px 0;
+    background: #fff;
+    border-radius: 4px;
+}
+
+.scan-item.fulfilled {
+    border-left: 4px solid #4CAF50;
+}
+
+.scan-item.unfulfilled {
+    border-left: 4px solid #FFC107;
+}
+
+.hidden {
     display: none;
 }
 
-#my-qr-reader img[alt="Camera based scan"] {
-    width: 100px !important;
-    height: 100px !important;
+.status-fulfilled {
+    color: #4CAF50;
+    font-weight: bold;
 }
 
-button {
-    padding: 10px 20px;
-    border: 1px solid #b2b2b2;
-    outline: none;
-    border-radius: 0.25em;
-    color: white;
-    font-size: 15px;
-    cursor: pointer;
-    margin-top: 15px;
-    margin-bottom: 10px;
-    background-color: #008000ad;
-    transition: 0.3s background-color;
+.status-unfulfilled {
+    color: #FFC107;
+    font-weight: bold;
 }
 
-button:hover {
-    background-color: #008000;
-}
-
-#html5-qrcode-anchor-scan-type-change {
-    text-decoration: none !important;
-    color: #1d9bf0;
-}
-
-video {
-    width: 100% !important;
-    border: 1px solid #b2b2b2 !important;
-    border-radius: 0.25em;
+@media (max-width: 600px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .scan-item {
+        flex-direction: column;
+        gap: 5px;
+    }
 }

@@ -63,6 +63,7 @@ domReady(function () {
               fetch(url, requestOptions)
                   .then((response) => response.json())
                   .then((data) => {
+                     alert(JSON.stringify(data))
                       if (data.details && data.details.fulfillment) {
                           alert(`Fulfillment Processed:\nStatus: ${data.details.fulfillment.status}`);
                           //update record as a scanned detail
@@ -103,8 +104,8 @@ console.error('Request failed:', error);
 // Handle network or other errors
 }); 
 
-                      } else {
-                          alert(`${orderNumber}  : ${data.message || "Ticket fulfillment is already active. Check admin page for ticket count/ verification. Proceed to Mark Attendance if valid." || data.details.fulfillment.status}`);
+        } else {
+    alert(`${orderNumber}  : ${data.message || "Ticket fulfillment is already active. Check admin page for ticket count/ verification. Proceed to Mark Attendance if valid." || data.details.fulfillment.status}`);
                                                          // submitting fulfillment
                                                          // add more details as indicated above  
           const data_shopify_error = {

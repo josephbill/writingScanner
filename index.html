@@ -1,43 +1,52 @@
-<!-- Index.html file -->
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet"
-          href="style.css">
-    <title>QR Code Scanner / Reader
-    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Event Ticket Scanner</title>
 </head>
-
 <body>
     <div class="container">
-     
-        <h1>Scan QR Codes</h1>
-        <div class="section">
-            <!-- Modal Structure -->
-<div id="scanModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <h4>Scanned Order Details</h4>
-        <p id="modal-order-details">Loading...</p>
-    </div>
-    <div class="modal-footer">
-        <button id="fulfill-btn" class="btn btn-success">Fulfill</button>
-        <button id="cancel-btn" class="btn btn-danger">Cancel</button>
-    </div>
-</div>
-
-<!-- Place a div for the QR Code scanner -->
-<div id="my-qr-reader"></div>
-<div id="herePara"></div>
+        <h1>Event Ticket Scanner</h1>
+        <div class="scanner-container">
+            <!-- Scanner Section -->
+            <div id="my-qr-reader"></div>
+            
+            <!-- Status Display -->
+            <div id="status-display">
+                <div class="scan-status">
+                    <div id="scan-indicator" class="indicator idle"></div>
+                    <span id="status-text">Ready to scan</span>
+                </div>
+                <div id="ticket-count" class="hidden">
+                    Scanned: <span id="scanned-count">0</span>/<span id="total-count">0</span>
+                </div>
+            </div>
+            
+            <!-- Current Ticket Info -->
+            <div id="current-ticket" class="hidden">
+                <h3>Current Ticket</h3>
+                <div id="ticket-details"></div>
+                <div class="action-buttons">
+                    <button id="process-btn" class="btn btn-success">Process</button>
+                    <button id="cancel-btn" class="btn btn-danger">Cancel</button>
+                </div>
+            </div>
+            
+            <!-- Recent Scans -->
+            <div id="recent-scans">
+                <h3>Recent Scans</h3>
+                <div id="scan-history"></div>
+            </div>
         </div>
     </div>
-    <script
-        src="https://unpkg.com/html5-qrcode">
-    </script>
+    
+    <!-- Audio for feedback -->
+    <audio id="success-sound" src="success.mp3" preload="auto"></audio>
+    <audio id="error-sound" src="error.mp3" preload="auto"></audio>
+    
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="script.js"></script>
 </body>
-
 </html>

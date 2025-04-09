@@ -41,6 +41,7 @@ domReady(function () {
 
   // filter scans 
   // Add this search function
+// Add this search function
 function filterScans(searchTerm) {
     const allScans = scannedTickets.slice(0, 50); // Show more scans when searching
     searchTerm = searchTerm.toLowerCase().trim();
@@ -55,7 +56,7 @@ function filterScans(searchTerm) {
             scan.order_number.toLowerCase().includes(searchTerm) ||
             (scan.first_name && scan.first_name.toLowerCase().includes(searchTerm)) ||
             (scan.prod_title && scan.prod_title.toLowerCase().includes(searchTerm)) ||
-            (scan.status && scan.status.toLowerCase().includes(searchTerm));
+            (scan.status && scan.status.toLowerCase().includes(searchTerm)));
     });
     
     // Highlight matching parts in the results
@@ -88,6 +89,42 @@ function filterScans(searchTerm) {
         scanHistory.innerHTML = '<div class="no-results">No matching scans found</div>';
     }
 }
+
+// Update the updateScanHistory function to accept optional filter
+function updateScanHistory(filter = '') {
+    if (filter) {
+        filterScans(filter);
+        return;
+    }
+    
+    scanHistory.innerHTML = scannedTickets.slice(0, 5).map(ticket => `
+        <div class="scan-item ${ticket.status}">
+            <span class="order-number">${ticket.order_number}</span>
+            <span class="name">${ticket.first_name}</span>
+            <span class="product">${ticket.prod_title}</span>
+            <span class="status">${ticket.status}</span>
+            <span class="time">${new Date(ticket.timestamp).toLocaleTimeString()}</span>
+        </div>
+    `).join("");
+}
+
+// Add event listeners for search
+scanSearch.addEventListener('input', (e) => {
+    filterScans(e.target.value);
+});
+
+clearSearch.addEventListener('click', () => {
+    scanSearch.value = '';
+    updateScanHistory();
+});
+
+// Add this to your initialization
+scanSearch.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        scanSearch.value = '';
+        updateScanHistory();
+    }
+});
 
 // Update the updateScanHistory function to accept optional filter
 function updateScanHistory(filter = '') {

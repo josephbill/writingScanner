@@ -23,6 +23,8 @@ domReady(function () {
   const scanSearch = document.getElementById("scan-search");
   const clearSearch = document.getElementById("clear-search");
   const clearScans = document.getElementById("clear-all-scans");
+  console.log("Clear scan element")
+  console.log(clearScans)
   
   // State management
   let currentOrder = null;
@@ -122,7 +124,7 @@ clearSearch.addEventListener('click', () => {
 clearScans.addEventListener('click', () => {
     scanSearch.value = '';
     localStorage.removeItem("scannedTickets")
-} )
+})
 
 // Add this to your initialization
 scanSearch.addEventListener('keydown', (e) => {

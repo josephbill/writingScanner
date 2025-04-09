@@ -1,351 +1,177 @@
-function domReady(fn) {
-  if (
-      document.readyState === "complete" ||
-      document.readyState === "interactive"
-  ) {
-      setTimeout(fn, 1000);
-  } else {
-      document.addEventListener("DOMContentLoaded", fn);
-  }
-}
-
 domReady(function () {
-  function onScanSuccess(decodeText, decodeResult) {
-      console.log("Your QR code data: " + decodeText, decodeResult);
-      // alert("Your QR code data: " + decodeText, decodeResult)
+    // Common function to handle ticket attendance submission
+    async function submitTicketAttendance(data, modal) {
+      try {
+        const response = await fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert(result.message);
+          window.location.reload();
+        } else {
+          alert(result.message);
+        }
+      } catch (error) {
+        console.error('Request failed:', error);
+        alert("Error submitting ticket attendance");
+      } finally {
+        if (modal) modal.style.display = "none";
+      }
+    }
+  
+    // Common function to populate modal
+    function populateModal(modal, details) {
+      const modalDetails = document.getElementById("modal-order-details");
+      modalDetails.innerHTML = `
+        <strong>Order ID:</strong> ${details.orderId || 'N/A'}<br>
+        <strong>Order Number:</strong> ${details.orderNumber}<br>
+        <strong>Product ID:</strong> ${details.productId || 'N/A'}<br>
+        <strong>Product Title:</strong> ${details.prodTitle || 'N/A'}<br>
+        <strong>Order Name:</strong> ${details.firstName} ${details.lastName || ''}<br>
+        <strong>Quantity:</strong> ${details.quantity}
+      `;
+  
+      const fulfillBtn = document.getElementById("fulfill-btn");
+      const cancelBtn = document.getElementById("cancel-btn");
+  
+      fulfillBtn.textContent = details.btnText || "Fulfill Order";
+      fulfillBtn.onclick = details.onFulfillClick || null;
+      cancelBtn.onclick = () => { modal.style.display = "none"; };
+  
+      modal.style.display = "block";
+    }
+  
+    // Handle order fulfillment
+    async function handleOrderFulfillment(orderId, orderNumber, firstName, lastName, quantity, prodTitle, productId) {
+      const modal = document.getElementById("scanModal");
+      
+      try {
+        const response = await fetch("https://adverteyez.onrender.com/fulfill_order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order_id: orderId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.details?.fulfillment) {
+          alert(`Remaining: ${data.remaining} - Status: ${data.status} - Fulfilled: ${data.fulfilled} - Quantity: ${quantity}`);
+          
+          const ticketData = {
+            first_name: `${firstName} ${lastName}`,
+            order_number: orderNumber,
+            order_id: orderId,
+            quantity: quantity,
+            prod_title: prodTitle,
+            status: "fulfilled"
+          };
+          
+          await submitTicketAttendance(ticketData, modal);
+        } else {
+          alert(`${orderNumber}: ${data.message || "Ticket fulfillment may already be active. Check admin page for verification."}`);
+          
+          const modalDetails = {
+            orderId,
+            orderNumber,
+            productId,
+            prodTitle,
+            firstName,
+            lastName,
+            quantity,
+            btnText: "Mark Attendance"
+          };
+          
+          populateModal(modal, {
+            ...modalDetails,
+            onFulfillClick: () => {
+              submitTicketAttendance({
+                first_name: `${firstName} ${lastName}`,
+                order_number: orderNumber,
+                order_id: orderId,
+                quantity: quantity,
+                prod_title: prodTitle,
+                status: "fulfilled"
+              }, modal);
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Request failed:", error);
+        alert("Error during fulfillment process.");
+      }
+    }
+  
+    // Handle special ticket types (MPESA, Complimentary)
+    function handleSpecialTicket(type, firstName, lastName, quantity, prodTitle) {
+      alert(`${type} Payment. Ticket Verified`);
+      
+      const modal = document.getElementById("scanModal");
+      const orderNumber = type.toLowerCase();
+      const ticketData = {
+        first_name: `${firstName} ${lastName}`,
+        order_number: orderNumber,
+        order_id: type === "MPESA" ? 1 : 0,
+        quantity: quantity,
+        prod_title: prodTitle,
+        status: "fulfilled"
+      };
+      
+      populateModal(modal, {
+        orderId: 'N/A',
+        orderNumber: type,
+        productId: 'N/A',
+        prodTitle,
+        firstName,
+        lastName,
+        quantity,
+        btnText: "Mark Attendance",
+        onFulfillClick: () => submitTicketAttendance(ticketData, modal)
+      });
+    }
+  
+    // Main scan success handler
+    function onScanSuccess(decodeText, decodeResult) {
+      console.log("QR code data:", decodeText, decodeResult);
+      
       const orderId = decodeText.match(/Order ID:\s*(\d+)/)?.[1];
       const orderNumber = decodeText.match(/Order Number:\s*([a-zA-Z0-9]+)/)?.[1];
-      const firstName = decodeText.match(/First Name:\s*([a-zA-Z0-9]+)/)?.[1];
-      const lastname = decodeText.match(/Last Name:\s*([a-zA-Z0-9]+)/)?.[1];
-      const quantity = decodeText.match(/Quantity:\s*([a-zA-Z0-9]+)/)?.[1];
-      const prod_title = decodeText.match(/Product Title:\s*([a-zA-Z0-9]+)/)?.[1];
+      const firstName = decodeText.match(/First Name:\s*([a-zA-Z]+)/)?.[1] || '';
+      const lastName = decodeText.match(/Last Name:\s*([a-zA-Z]+)/)?.[1] || '';
+      const quantity = decodeText.match(/Quantity:\s*(\d+)/)?.[1] || '0';
+      const prodTitle = decodeText.match(/Product Title:\s*([a-zA-Z0-9\s]+)/)?.[1] || '';
       const productId = decodeText.match(/Product ID:\s*(\d+)/)?.[1];
-
-
-      // alert(firstName)
-
+  
       if (orderId && orderNumber && productId) {
-          localStorage.setItem("order_id", orderId);
-          localStorage.setItem("order_number", orderNumber);
-          localStorage.setItem("product_id", productId);
-
-          // Populate modal with details
-          const modalDetails = document.getElementById("modal-order-details");
-          modalDetails.innerHTML = `
-              <strong>Order ID:</strong> ${orderId}<br>
-              <strong>Order Number:</strong> ${orderNumber}<br>
-              <strong>Product ID:</strong> ${productId}<br>
-              <strong>Product Title:</strong> ${prod_title}<br>
-              <strong>Order Name:</strong> ${firstName} ${lastname}<br>
-              <strong>Quantity:</strong> ${quantity}
-          `;
-
-          // Show modal
-          const modal = document.getElementById("scanModal");
-          modal.style.display = "block";
-
-          // Handle button clicks
-          const fulfillBtn = document.getElementById("fulfill-btn");
-          const cancelBtn = document.getElementById("cancel-btn");
-
-          fulfillBtn.onclick = () => {
-              // Perform the fetch operation
-              const requestOptions = {
-                  method: "POST",
-                  headers: {
-                      "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({ order_id: orderId }),
-              };
-
-              const url = "https://adverteyez.onrender.com/fulfill_order";
-
-              fetch(url, requestOptions)
-                  .then((response) => response.json())
-                  .then((data) => {
-                     alert(JSON.stringify(data))
-                      if (data.details && data.details.fulfillment) {
-                          alert(`Here is the remaining count: ${data.details.remaining} - here is the fulfilment status - ${data.details.status} - count of fulfilled - ${data.details.fulfilled} - quantity was :: ${quantity}`)
-                          alert(`Fulfillment Processed:\nStatus: ${data.details.fulfillment.status}`);
-                          //update record as a scanned detail
-                               // submitting fulfillment
-                               // here add more details to the order submission in ticket_attendance 
-                               // TODO : also update model on backend  
-          const data_shopify = {
-              "first_name": firstName + " " + lastname,
-              "order_number": orderNumber,
-              "order_id" : orderId,
-              "quantity" : quantity,
-              "prod_title" : prod_title,
-              "status" : "fulfilled"
-            }
-                           // Making the POST request to the server
-fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
-method: 'POST',
-headers: {
-'Content-Type': 'application/json' // Tell the server we're sending JSON data
-},
-body: JSON.stringify(data_shopify) // Convert JavaScript object to JSON string
-})
-.then(response => response.json()) // Convert the response to JSON
-.then(result => {
-if (result.success) {
-console.log('Shopify order fulfilled.', result);
-alert(result.message)
-// Do something with the result if needed
-} else {
-console.error('Error:', result.message);
-alert(result.message)
-
-// Handle error if request fails
-}
-})
-.catch(error => {
-console.error('Request failed:', error);
-// Handle network or other errors
-}); 
-
-        } else {
-            alert(JSON.stringify(data))
-
-    alert(`${orderNumber}  : ${data.message || "Ticket fulfillment is already active. Check admin page for ticket count/ verification. Proceed to Mark Attendance if valid." || data.details.fulfillment.status}`);
-                                                         // submitting fulfillment
-                                                         // add more details as indicated above  
-          const data_shopify_error = {
-            "first_name": firstName + " " + lastname,
-            "order_number": orderNumber,
-            "order_id" : orderId,
-            "quantity" : quantity,
-            "prod_title" : prod_title,
-            "status" : "fulfilled"
-            }
-            // here add a confirm window popup , for count check. 
-             // Populate modal with details
-          const modalDetails = document.getElementById("modal-order-details");
-          modalDetails.innerHTML = `
-          <strong>Order ID:</strong> ${orderId}<br>
-          <strong>Order Number:</strong> ${orderNumber}<br>
-          <strong>Product ID:</strong> ${productId}<br>
-          <strong>Product Title:</strong> ${prod_title}<br>
-          <strong>Order Name:</strong> ${firstName} ${lastname}<br>
-          <strong>Quantity:</strong> ${quantity}
-          `;
-
-          // Show modal
-          const modal = document.getElementById("scanModal");
-          modal.style.display = "block";
-
-          // Handle button clicks
-          const fulfillBtn = document.getElementById("fulfill-btn");
-          fulfillBtn.textContent = "Mark Attendance"
-          const cancelBtn = document.getElementById("cancel-btn");
-
-          fulfillBtn.addEventListener('click', function () {
-               
-                           // Making the POST request to the server
-fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
-method: 'POST',
-headers: {
-'Content-Type': 'application/json' // Tell the server we're sending JSON data
-},
-body: JSON.stringify(data_shopify_error) // Convert JavaScript object to JSON string
-})
-.then(response => response.json()) // Convert the response to JSON
-.then(result => {
-if (result.success) {
-// console.log('Shopify order fulfilled. Multiple order fulfillment', result);
-alert('Shopify order fulfilled. Multiple order fulfillment')
-window.location.reload()
-modal.style.display = "none";
-
-// Do something with the result if needed
-} else {
-console.error('Error:', result.message);
-alert(result.message)
-window.location.reload()
-modal.style.display = "none";
-
-// Handle error if request fails
-}
-})
-.catch(error => {
-console.error('Request failed:', error);
-// Handle network or other errors
-}); 
-
-          })
-
-          // cancel button 
-          cancelBtn.addEventListener('click', function(){
-            modal.style.display = "none";
-          })
-
-
-          }
-                  })
-                  .catch((error) => {
-                      console.error("Request failed:", error);
-                      alert("Error: Request failed during fulfillment process.");
-                  });
-
-              // Close modal
-              modal.style.display = "none";
-          };
-
-          cancelBtn.onclick = () => {
-              modal.style.display = "none";
-          };
-      } else if(orderNumber.toLowerCase()  === 'mpesa'){
-          alert("Mpesa Payment. Ticket Verified")
-          // submitting fulfillment 
-          const data_mpesa = {
-            "first_name": firstName + " " + lastname,
-            "order_number": orderNumber,
-            "order_id" : 1,
-            "quantity" : quantity,
-            "prod_title" : prod_title,
-            "status" : "fulfilled"
-            }
-
-            const modalDetails = document.getElementById("modal-order-details");
-            modalDetails.innerHTML = `
-            <strong>Order ID:</strong> ${orderId}<br>
-            <strong>Order Number:</strong> ${orderNumber}<br>
-            <strong>Product ID:</strong> ${productId}<br>
-            <strong>Product Title:</strong> ${prod_title}<br>
-            <strong>Order Name:</strong> ${firstName} ${lastname}<br>
-            <strong>Quantity:</strong> ${quantity}
-        `;
-
-            // Show modal
-            const modal = document.getElementById("scanModal");
-            modal.style.display = "block";
-
-            // Handle button clicks
-            const fulfillBtn = document.getElementById("fulfill-btn");
-            fulfillBtn.textContent = "Mark Attendance"
-            const cancelBtn = document.getElementById("cancel-btn");
-
-            fulfillBtn.addEventListener('click', function () {
-                 
-                             // Making the POST request to the server
-// Making the POST request to the server
-fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
-method: 'POST',
-headers: {
-'Content-Type': 'application/json' // Tell the server we're sending JSON data
-},
-body: JSON.stringify(data_mpesa) // Convert JavaScript object to JSON string
-})
-.then(response => response.json()) // Convert the response to JSON
-.then(result => {
-if (result.success) {
-console.log('Mpesa fulfilled.', result);
-alert(result.message)
-window.location.reload()
-modal.style.display = "none";
-
-// Do something with the result if needed
-} else {
-console.error('Error:', result.message);
-alert(result.message)
-modal.style.display = "none";
-
-// Handle error if request fails
-}
-})
-.catch(error => {
-console.error('Request failed:', error);
-// Handle network or other errors
-}); 
-
-            })
-
-            // cancel button 
-            cancelBtn.addEventListener('click', function(){
-              modal.style.display = "none";
-            })
-
-
-            
-      } else if(orderNumber.toLowerCase()  === 'complimentary'){
-          alert("This is a complimentary issued ticket. Ticket Verified")
-
-          const data_complimentary = {
-            "first_name": firstName + " " + lastname,
-            "order_number": orderNumber,
-            "order_id" : 0,
-            "quantity" : quantity,
-            "prod_title" : prod_title,
-            "status" : "fulfilled"
-            }
-
-            const modalDetails = document.getElementById("modal-order-details");
-            modalDetails.innerHTML = `
-            <strong>Order ID:</strong> ${orderId}<br>
-            <strong>Order Number:</strong> ${orderNumber}<br>
-            <strong>Product ID:</strong> ${productId}<br>
-            <strong>Product Title:</strong> ${prod_title}<br>
-            <strong>Order Name:</strong> ${firstName} ${lastname}<br>
-            <strong>Quantity:</strong> ${quantity}
-        `;
-
-            // Show modal
-            const modal = document.getElementById("scanModal");
-            modal.style.display = "block";
-
-            // Handle button clicks
-            const fulfillBtn = document.getElementById("fulfill-btn");
-            fulfillBtn.textContent = "Mark Attendance"
-            const cancelBtn = document.getElementById("cancel-btn");
-
-            fulfillBtn.addEventListener('click', function () {
-                 
-                             // Making the POST request to the server
-// Making the POST request to the server
-fetch('https://adverteyez.onrender.com/create_ticket_attendance', {
-method: 'POST',
-headers: {
-'Content-Type': 'application/json' // Tell the server we're sending JSON data
-},
-body: JSON.stringify(data_complimentary) // Convert JavaScript object to JSON string
-})
-.then(response => response.json()) // Convert the response to JSON
-.then(result => {
-if (result.success) {
-console.log('Complimentary recorded:', result);
-alert(result.message)
-window.location.reload()
-modal.style.display = "none";
-// Do something with the result if needed
-} else {
-console.error('Error:', result.message);
-alert(result.message)
-modal.style.display = "none";
-// Handle error if request fails
-}
-})
-.catch(error => {
-console.error('Request failed:', error);
-// Handle network or other errors
-});
-
-            })
-
-            // cancel button 
-            cancelBtn.addEventListener('click', function(){
-              modal.style.display = "none";
-            })
-
-
-          
+        localStorage.setItem("order_id", orderId);
+        localStorage.setItem("order_number", orderNumber);
+        localStorage.setItem("product_id", productId);
+  
+        populateModal(document.getElementById("scanModal"), {
+          orderId, orderNumber, productId, prodTitle, 
+          firstName, lastName, quantity
+        });
+  
+        document.getElementById("fulfill-btn").onclick = () => {
+          handleOrderFulfillment(orderId, orderNumber, firstName, lastName, quantity, prodTitle, productId);
+        };
+      } else if (orderNumber?.toLowerCase() === 'mpesa') {
+        handleSpecialTicket("MPESA", firstName, lastName, quantity, prodTitle);
+      } else if (orderNumber?.toLowerCase() === 'complimentary') {
+        handleSpecialTicket("Complimentary", firstName, lastName, quantity, prodTitle);
       } else {
-          alert("Failed to extract order details from the QR code.");
+        alert("Failed to extract order details from the QR code.");
       }
-  }
-
-  let htmlscanner = new Html5QrcodeScanner("my-qr-reader", { fps: 10, qrbos: 250 });
-  htmlscanner.render(onScanSuccess);
-});
-
-
+    }
+  
+    // Initialize scanner
+    const htmlscanner = new Html5QrcodeScanner("my-qr-reader", { 
+      fps: 10, 
+      qrbos: 250 
+    });
+    htmlscanner.render(onScanSuccess);
+  });

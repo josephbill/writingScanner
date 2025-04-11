@@ -227,82 +227,188 @@ scanSearch.addEventListener('keydown', (e) => {
   }
   
   // Process order fulfillment or attendance marking
-  function processTicket() {
-      if (!currentOrder) return;
+function processTicket() {
+    if (!currentOrder) return;
+    
+    updateStatus('processing', 'Processing...');
+    
+    // Check if this is a special ticket type (complimentary or mpesa)
+    const isSpecialTicket = ['complimentary', 'mpesa'].includes(currentOrder.order_number.toLowerCase());
+    
+    // For special tickets, we'll just mark attendance without API call
+    if (isSpecialTicket) {
+        // Create scan record
+        const scanRecord = {
+            ...currentOrder,
+            status: 'fulfilled',
+            timestamp: new Date().toISOString(),
+            action: 'attendance'
+        };
+        
+        // Add to scan history
+        scannedTickets.unshift(scanRecord);
+        localStorage.setItem("scannedTickets", JSON.stringify(scannedTickets));
+        
+        playSound('success');
+        updateStatus('success', 'Attendance marked!');
+        updateScanHistory();
+        
+        setTimeout(() => {
+            currentTicket.classList.add("hidden");
+            updateStatus('ready', 'Ready to scan next ticket');
+        }, 1500);
+        
+        return;
+    }
+    
+    // Normal ticket processing
+    const isAlreadyFulfilled = currentOrder.status === 'fulfilled';
+    const endpoint = isAlreadyFulfilled ? 
+        'https://adverteyez.onrender.com/create_ticket_attendance' : 
+        'https://adverteyez.onrender.com/fulfill_order';
+    
+    const requestOptions = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+            order_id: currentOrder.order_id,
+            first_name: `${currentOrder.first_name} ${currentOrder.lastname}`,
+            order_number: currentOrder.order_number,
+            quantity: currentOrder.quantity,
+            prod_title: currentOrder.prod_title,
+            status: "fulfilled"
+        })
+    };
+    
+    fetch(endpoint, requestOptions)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success || (data.details && data.details.fulfillment)) {
+                playSound('success');
+                
+                // Update order status
+                currentOrder.status = 'fulfilled';
+                
+                // Update scanned count
+                if (data.details) {
+                    currentOrder.scannedCount = data.details.fulfilled;
+                } else {
+                    currentOrder.scannedCount = (currentOrder.scannedCount || 0) + 1;
+                }
+                
+                // Add to scan history
+                const scanRecord = {
+                    ...currentOrder,
+                    timestamp: new Date().toISOString(),
+                    action: isAlreadyFulfilled ? 'attendance' : 'fulfillment'
+                };
+                scannedTickets.unshift(scanRecord);
+                localStorage.setItem("scannedTickets", JSON.stringify(scannedTickets));
+                
+                updateStatus('success', isAlreadyFulfilled ? 'Attendance marked!' : 'Order fulfilled!');
+                updateScanHistory();
+                
+                // For fulfilled orders with remaining quantity, keep the ticket visible
+                if (currentOrder.quantity > 1 && currentOrder.scannedCount < currentOrder.quantity) {
+                    showTicketInfo(currentOrder);
+                    updateStatus('ready', `Scan next ticket (${currentOrder.scannedCount}/${currentOrder.quantity})`);
+                } else {
+                    setTimeout(() => {
+                        currentTicket.classList.add("hidden");
+                        updateStatus('ready', 'Ready to scan next ticket');
+                    }, 1500);
+                }
+            } else {
+                playSound('error');
+                updateStatus('error', data.message || 'Processing failed');
+                // Keep the ticket visible so user can try again
+                showTicketInfo(currentOrder);
+            }
+        })
+        .catch(error => {
+            playSound('error');
+            console.error("Request failed:", error);
+            updateStatus('error', "Network error");
+            // Keep the ticket visible so user can try again
+            showTicketInfo(currentOrder);
+        });
+}
+//   function processTicket() {
+//       if (!currentOrder) return;
       
-      updateStatus('processing', 'Processing...');
+//       updateStatus('processing', 'Processing...');
       
-      const isAlreadyFulfilled = currentOrder.status === 'fulfilled';
-      const endpoint = isAlreadyFulfilled ? 
-          'https://adverteyez.onrender.com/create_ticket_attendance' : 
-          'https://adverteyez.onrender.com/fulfill_order';
+//       const isAlreadyFulfilled = currentOrder.status === 'fulfilled';
+//       const endpoint = isAlreadyFulfilled ? 
+//           'https://adverteyez.onrender.com/create_ticket_attendance' : 
+//           'https://adverteyez.onrender.com/fulfill_order';
       
-      const requestOptions = {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-              order_id: currentOrder.order_id,
-              first_name: `${currentOrder.first_name} ${currentOrder.lastname}`,
-              order_number: currentOrder.order_number,
-              quantity: currentOrder.quantity,
-              prod_title: currentOrder.prod_title,
-              status: "fulfilled"
-          })
-      };
+//       const requestOptions = {
+//           method: "POST",
+//           headers: { "Content-Type": "application/json" },
+//           body: JSON.stringify({ 
+//               order_id: currentOrder.order_id,
+//               first_name: `${currentOrder.first_name} ${currentOrder.lastname}`,
+//               order_number: currentOrder.order_number,
+//               quantity: currentOrder.quantity,
+//               prod_title: currentOrder.prod_title,
+//               status: "fulfilled"
+//           })
+//       };
       
-      fetch(endpoint, requestOptions)
-          .then(response => response.json())
-          .then(data => {
-              if (data.success || (data.details && data.details.fulfillment)) {
-                  playSound('success');
+//       fetch(endpoint, requestOptions)
+//           .then(response => response.json())
+//           .then(data => {
+//               if (data.success || (data.details && data.details.fulfillment)) {
+//                   playSound('success');
                   
-                  // Update order status
-                  currentOrder.status = 'fulfilled';
+//                   // Update order status
+//                   currentOrder.status = 'fulfilled';
                   
-                  // Update scanned count
-                  if (data.details) {
-                      currentOrder.scannedCount = data.details.fulfilled;
-                  } else {
-                      currentOrder.scannedCount = (currentOrder.scannedCount || 0) + 1;
-                  }
+//                   // Update scanned count
+//                   if (data.details) {
+//                       currentOrder.scannedCount = data.details.fulfilled;
+//                   } else {
+//                       currentOrder.scannedCount = (currentOrder.scannedCount || 0) + 1;
+//                   }
                   
-                  // Add to scan history
-                  const scanRecord = {
-                      ...currentOrder,
-                      timestamp: new Date().toISOString(),
-                      action: isAlreadyFulfilled ? 'attendance' : 'fulfillment'
-                  };
-                  scannedTickets.unshift(scanRecord);
-                  localStorage.setItem("scannedTickets", JSON.stringify(scannedTickets));
+//                   // Add to scan history
+//                   const scanRecord = {
+//                       ...currentOrder,
+//                       timestamp: new Date().toISOString(),
+//                       action: isAlreadyFulfilled ? 'attendance' : 'fulfillment'
+//                   };
+//                   scannedTickets.unshift(scanRecord);
+//                   localStorage.setItem("scannedTickets", JSON.stringify(scannedTickets));
                   
-                  updateStatus('success', isAlreadyFulfilled ? 'Attendance marked!' : 'Order fulfilled!');
-                  updateScanHistory();
+//                   updateStatus('success', isAlreadyFulfilled ? 'Attendance marked!' : 'Order fulfilled!');
+//                   updateScanHistory();
                   
-                  // For fulfilled orders with remaining quantity, keep the ticket visible
-                  if (currentOrder.quantity > 1 && currentOrder.scannedCount < currentOrder.quantity) {
-                      showTicketInfo(currentOrder);
-                      updateStatus('ready', `Scan next ticket (${currentOrder.scannedCount}/${currentOrder.quantity})`);
-                  } else {
-                      setTimeout(() => {
-                          currentTicket.classList.add("hidden");
-                          updateStatus('ready', 'Ready to scan next ticket');
-                      }, 1500);
-                  }
-              } else {
-                  playSound('error');
-                  updateStatus('error', data.message || 'Processing failed');
-                  // Keep the ticket visible so user can try again
-                  showTicketInfo(currentOrder);
-              }
-          })
-          .catch(error => {
-              playSound('error');
-              console.error("Request failed:", error);
-              updateStatus('error', "Network error");
-              // Keep the ticket visible so user can try again
-              showTicketInfo(currentOrder);
-          });
-  }
+//                   // For fulfilled orders with remaining quantity, keep the ticket visible
+//                   if (currentOrder.quantity > 1 && currentOrder.scannedCount < currentOrder.quantity) {
+//                       showTicketInfo(currentOrder);
+//                       updateStatus('ready', `Scan next ticket (${currentOrder.scannedCount}/${currentOrder.quantity})`);
+//                   } else {
+//                       setTimeout(() => {
+//                           currentTicket.classList.add("hidden");
+//                           updateStatus('ready', 'Ready to scan next ticket');
+//                       }, 1500);
+//                   }
+//               } else {
+//                   playSound('error');
+//                   updateStatus('error', data.message || 'Processing failed');
+//                   // Keep the ticket visible so user can try again
+//                   showTicketInfo(currentOrder);
+//               }
+//           })
+//           .catch(error => {
+//               playSound('error');
+//               console.error("Request failed:", error);
+//               updateStatus('error', "Network error");
+//               // Keep the ticket visible so user can try again
+//               showTicketInfo(currentOrder);
+//           });
+//   }
   
   // Cancel current operation
   function cancelOperation() {

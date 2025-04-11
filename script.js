@@ -231,7 +231,6 @@ function processTicket() {
     if (!currentOrder) return;
     
     updateStatus('processing', 'Processing...');
-    alert(currentOrder.order_number)
     // Check if this is a special ticket type (complimentary or mpesa)
     const isSpecialTicket = ['complimentary', 'mpesa'].includes(currentOrder.order_number.toLowerCase());
     
@@ -422,55 +421,103 @@ function processTicket() {
   
   // QR Code Scanner
   function onScanSuccess(decodeText, decodeResult) {
-      console.log("QR code data:", decodeText, decodeResult);
+    console.log("QR code data:", decodeText, decodeResult);
+    
+    const orderId = decodeText.match(/Order ID:\s*(\d+)/)?.[1];
+    const orderNumber = decodeText.match(/Order Number:\s*([a-zA-Z0-9]+)/)?.[1];
+    const firstName = decodeText.match(/First Name:\s*([a-zA-Z\s]+)/)?.[1];
+    const lastname = decodeText.match(/Last Name:\s*([a-zA-Z\s]+)/)?.[1];
+    const quantity = parseInt(decodeText.match(/Quantity:\s*([a-zA-Z0-9]+)/)?.[1]) || 1;
+    const prod_title = decodeText.match(/Product Title:\s*([a-zA-Z0-9\s]+)/)?.[1];
+    const productId = decodeText.match(/Product ID:\s*(\d+)/)?.[1];
+    
+    // Check if this is a special ticket type
+    const lowerOrderNumber = orderNumber ? orderNumber.toLowerCase() : '';
+    const isSpecialTicket = ['mpesa', 'complimentary'].includes(lowerOrderNumber);
+    
+    if (isSpecialTicket || (orderId && orderNumber && productId)) {
+        updateStatus('scanned', 'Ticket scanned');
+        
+        // Check if this order was already scanned
+        const existingScan = scannedTickets.find(t => t.order_number === orderNumber);
+        let status = isSpecialTicket ? 'fulfilled' : 'unfulfilled';
+        let scannedCount = 0;
+        
+        if (existingScan) {
+            status = existingScan.status;
+            scannedCount = existingScan.scannedCount || 1;
+        }
+        
+        // Create order object
+        const order = {
+            order_id: orderId || 'N/A',
+            order_number: orderNumber,
+            first_name: firstName || 'Guest',
+            lastname: lastname || '',
+            quantity: quantity,
+            prod_title: prod_title || 'Special Ticket',
+            product_id: productId || 'N/A',
+            status: status,
+            scannedCount: scannedCount
+        };
+        
+        showTicketInfo(order);
+    } else {
+        playSound('error');
+        updateStatus('error', 'Invalid ticket format');
+        setTimeout(() => updateStatus('ready', 'Ready to scan'), 2000);
+    }
+}
+//   function onScanSuccess(decodeText, decodeResult) {
+//       console.log("QR code data:", decodeText, decodeResult);
       
-      const orderId = decodeText.match(/Order ID:\s*(\d+)/)?.[1];
-      const orderNumber = decodeText.match(/Order Number:\s*([a-zA-Z0-9]+)/)?.[1];
-      const firstName = decodeText.match(/First Name:\s*([a-zA-Z\s]+)/)?.[1];
-      const lastname = decodeText.match(/Last Name:\s*([a-zA-Z\s]+)/)?.[1];
-      const quantity = parseInt(decodeText.match(/Quantity:\s*([a-zA-Z0-9]+)/)?.[1]) || 1;
-      const prod_title = decodeText.match(/Product Title:\s*([a-zA-Z0-9\s]+)/)?.[1];
-      const productId = decodeText.match(/Product ID:\s*(\d+)/)?.[1];
+//       const orderId = decodeText.match(/Order ID:\s*(\d+)/)?.[1];
+//       const orderNumber = decodeText.match(/Order Number:\s*([a-zA-Z0-9]+)/)?.[1];
+//       const firstName = decodeText.match(/First Name:\s*([a-zA-Z\s]+)/)?.[1];
+//       const lastname = decodeText.match(/Last Name:\s*([a-zA-Z\s]+)/)?.[1];
+//       const quantity = parseInt(decodeText.match(/Quantity:\s*([a-zA-Z0-9]+)/)?.[1]) || 1;
+//       const prod_title = decodeText.match(/Product Title:\s*([a-zA-Z0-9\s]+)/)?.[1];
+//       const productId = decodeText.match(/Product ID:\s*(\d+)/)?.[1];
       
-      if (orderId && orderNumber && productId) {
-          updateStatus('scanned', 'Ticket scanned');
+//       if (orderId && orderNumber && productId) {
+//           updateStatus('scanned', 'Ticket scanned');
           
-          // Check if this order was already scanned
-          const existingScan = scannedTickets.find(t => t.order_id === orderId);
-          let status = 'unfulfilled';
-          let scannedCount = 0;
+//           // Check if this order was already scanned
+//           const existingScan = scannedTickets.find(t => t.order_id === orderId);
+//           let status = 'unfulfilled';
+//           let scannedCount = 0;
           
-          if (existingScan) {
-              status = existingScan.status;
-              scannedCount = existingScan.scannedCount || 1;
-          }
+//           if (existingScan) {
+//               status = existingScan.status;
+//               scannedCount = existingScan.scannedCount || 1;
+//           }
           
-          // Check if this is a special ticket type
-          const lowerOrderNumber = orderNumber.toLowerCase();
-          if (lowerOrderNumber === 'mpesa' || lowerOrderNumber === 'complimentary') {
-              status = 'fulfilled';
-          }
+//           // Check if this is a special ticket type
+//           const lowerOrderNumber = orderNumber.toLowerCase();
+//           if (lowerOrderNumber === 'mpesa' || lowerOrderNumber === 'complimentary') {
+//               status = 'fulfilled';
+//           }
           
-          // Create order object
-          const order = {
-              order_id: orderId,
-              order_number: orderNumber,
-              first_name: firstName,
-              lastname: lastname,
-              quantity: quantity,
-              prod_title: prod_title,
-              product_id: productId,
-              status: status,
-              scannedCount: scannedCount
-          };
+//           // Create order object
+//           const order = {
+//               order_id: orderId,
+//               order_number: orderNumber,
+//               first_name: firstName,
+//               lastname: lastname,
+//               quantity: quantity,
+//               prod_title: prod_title,
+//               product_id: productId,
+//               status: status,
+//               scannedCount: scannedCount
+//           };
           
-          showTicketInfo(order);
-      } else {
-          playSound('error');
-          updateStatus('error', 'Invalid ticket format');
-          setTimeout(() => updateStatus('ready', 'Ready to scan'), 2000);
-      }
-  }
+//           showTicketInfo(order);
+//       } else {
+//           playSound('error');
+//           updateStatus('error', 'Invalid ticket format');
+//           setTimeout(() => updateStatus('ready', 'Ready to scan'), 2000);
+//       }
+//   }
   
   // Initialize scanner
   let htmlscanner = new Html5QrcodeScanner("my-qr-reader", { 

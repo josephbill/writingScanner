@@ -1,247 +1,255 @@
 function domReady(fn) {
-  if (document.readyState === "complete" || document.readyState === "interactive") {
+    if (document.readyState === "complete" || document.readyState === "interactive") {
       setTimeout(fn, 1000);
-  } else {
+    } else {
       document.addEventListener("DOMContentLoaded", fn);
+    }
   }
-}
-
-domReady(function () {
-  // DOM elements
-  const statusIndicator = document.getElementById("scan-indicator");
-  const statusText = document.getElementById("status-text");
-  const ticketCount = document.getElementById("ticket-count");
-  const scannedCount = document.getElementById("scanned-count");
-  const totalCount = document.getElementById("total-count");
-  const currentTicket = document.getElementById("current-ticket");
-  const ticketDetails = document.getElementById("ticket-details");
-  const processBtn = document.getElementById("process-btn");
-  const cancelBtn = document.getElementById("cancel-btn");
-  const scanHistory = document.getElementById("scan-history");
-  const successSound = document.getElementById("success-sound");
-  const errorSound = document.getElementById("error-sound");
-  const scanSearch = document.getElementById("scan-search");
-  const clearSearch = document.getElementById("clear-search");
-  const clearScans = document.getElementById("clear-all-scans");
-  console.log("Clear scan element")
-  console.log(clearScans)
   
-  // State management
-  let currentOrder = null;
-  let scannedTickets = JSON.parse(localStorage.getItem("scannedTickets")) || [];
+  domReady(function () {
+    // DOM elements
+    const statusIndicator = document.getElementById("scan-indicator");
+    const statusText = document.getElementById("status-text");
+    const ticketCount = document.getElementById("ticket-count");
+    const scannedCount = document.getElementById("scanned-count");
+    const totalCount = document.getElementById("total-count");
+    const currentTicket = document.getElementById("current-ticket");
+    const ticketDetails = document.getElementById("ticket-details");
+    const processBtn = document.getElementById("process-btn");
+    const cancelBtn = document.getElementById("cancel-btn");
+    const scanHistory = document.getElementById("scan-history");
+    const successSound = document.getElementById("success-sound");
+    const errorSound = document.getElementById("error-sound");
+    const scanSearch = document.getElementById("scan-search");
+    const clearSearch = document.getElementById("clear-search");
+    const clearScans = document.getElementById("clear-all-scans");
   
-  // Update UI with scan history
-  function updateScanHistory() {
-      scanHistory.innerHTML = scannedTickets.slice(0, 5).map(ticket => `
-          <div class="scan-item ${ticket.status}">
-              <span class="order-number">${ticket.order_number}</span>
-              <span class="name">${ticket.first_name}</span>
-              <span class="status">${ticket.status}</span>
-              <span class="time">${new Date(ticket.timestamp).toLocaleTimeString()}</span>
-          </div>
+    // State management
+    let currentOrder = null;
+    let scannedTickets = JSON.parse(localStorage.getItem("scannedTickets")) || [];
+  
+    // Enhanced scan grouping with special ticket handling
+    function getScansByOrderNumber() {
+      const ordersMap = new Map();
+      
+      scannedTickets.forEach(scan => {
+        // Use composite key for special tickets (firstname + order_number)
+        const isSpecialTicket = ['complimentary', 'mpesa'].includes(scan.order_number.toLowerCase());
+        const trackingKey = isSpecialTicket 
+          ? `${scan.first_name}_${scan.order_number}` 
+          : scan.order_number;
+          
+        if (!ordersMap.has(trackingKey)) {
+          ordersMap.set(trackingKey, {
+            order: scan,
+            scans: [],
+            fulfilled: false,
+            lastScanTime: 0,
+            quantity: scan.quantity || 1 // Default to 1 if not specified
+          });
+        }
+        
+        const orderData = ordersMap.get(trackingKey);
+        orderData.scans.push(scan);
+        
+        // Track most recent scan time
+        const scanTime = new Date(scan.timestamp).getTime();
+        orderData.lastScanTime = Math.max(orderData.lastScanTime, scanTime);
+        
+        // Mark as fulfilled if any scan was a fulfillment
+        if (scan.action === 'fulfillment' || scan.status === 'fulfilled') {
+          orderData.fulfilled = true;
+        }
+      });
+      
+      return ordersMap;
+    }
+  
+    // Enhanced scan history update
+    function updateScanHistory(filter = '') {
+      if (filter) {
+        filterScans(filter);
+        return;
+      }
+      
+      const ordersMap = getScansByOrderNumber();
+      const recentOrders = Array.from(ordersMap.values())
+        .sort((a, b) => b.lastScanTime - a.lastScanTime) // Sort by most recent
+        .slice(0, 5) // Get top 5
+        .map(orderData => ({
+          ...orderData.order,
+          scannedCount: orderData.scans.length,
+          quantity: orderData.quantity
+        }));
+      
+      scanHistory.innerHTML = recentOrders.map(order => `
+        <div class="scan-item ${order.status}">
+          <span class="order-number">${order.order_number}</span>
+          <span class="name">${order.first_name}</span>
+          <span class="product">${order.prod_title}</span>
+          <span class="status">${order.status}</span>
+          <span class="count">${order.scannedCount || 1}/${order.quantity}</span>
+          <span class="time">${new Date(order.timestamp).toLocaleTimeString()}</span>
+        </div>
       `).join("");
-  }
-
-  // filter scans 
-  // Add this search function
-// Add this search function
-function filterScans(searchTerm) {
-    const allScans = scannedTickets.slice(0, 50); // Show more scans when searching
-    searchTerm = searchTerm.toLowerCase().trim();
-    
-    if (!searchTerm) {
+    }
+  
+    // Search functionality
+    function filterScans(searchTerm) {
+      const allScans = scannedTickets.slice(0, 50);
+      searchTerm = searchTerm.toLowerCase().trim();
+      
+      if (!searchTerm) {
         updateScanHistory();
         return;
-    }
-    
-    const filtered = allScans.filter(scan => {
+      }
+      
+      const filtered = allScans.filter(scan => {
         return (
-            scan.order_number.toLowerCase().includes(searchTerm) ||
-            (scan.first_name && scan.first_name.toLowerCase().includes(searchTerm)) ||
-            (scan.prod_title && scan.prod_title.toLowerCase().includes(searchTerm)) ||
-            (scan.status && scan.status.toLowerCase().includes(searchTerm)));
-    });
-    
-    // Highlight matching parts in the results
-    scanHistory.innerHTML = filtered.map(ticket => {
+          scan.order_number.toLowerCase().includes(searchTerm) ||
+          (scan.first_name && scan.first_name.toLowerCase().includes(searchTerm)) ||
+          (scan.prod_title && scan.prod_title.toLowerCase().includes(searchTerm)) ||
+          (scan.status && scan.status.toLowerCase().includes(searchTerm)));
+      });
+      
+      scanHistory.innerHTML = filtered.map(ticket => {
         const highlight = (text, field) => {
-            if (!text) return '';
-            const str = String(text);
-            const index = str.toLowerCase().indexOf(searchTerm);
-            if (index >= 0) {
-                const before = str.substring(0, index);
-                const match = str.substring(index, index + searchTerm.length);
-                const after = str.substring(index + searchTerm.length);
-                return `${before}<span class="highlight">${match}</span>${after}`;
-            }
-            return str;
+          if (!text) return '';
+          const str = String(text);
+          const index = str.toLowerCase().indexOf(searchTerm);
+          if (index >= 0) {
+            const before = str.substring(0, index);
+            const match = str.substring(index, index + searchTerm.length);
+            const after = str.substring(index + searchTerm.length);
+            return `${before}<span class="highlight">${match}</span>${after}`;
+          }
+          return str;
         };
         
         return `
-            <div class="scan-item ${ticket.status}">
-                <span class="order-number">${highlight(ticket.order_number, 'order_number')}</span>
-                <span class="name">${highlight(ticket.first_name, 'first_name')}</span>
-                <span class="product">${highlight(ticket.prod_title, 'prod_title')}</span>
-                <span class="status">${highlight(ticket.status, 'status')}</span>
-                <span class="time">${new Date(ticket.timestamp).toLocaleTimeString()}</span>
-            </div>
+          <div class="scan-item ${ticket.status}">
+            <span class="order-number">${highlight(ticket.order_number, 'order_number')}</span>
+            <span class="name">${highlight(ticket.first_name, 'first_name')}</span>
+            <span class="product">${highlight(ticket.prod_title, 'prod_title')}</span>
+            <span class="status">${highlight(ticket.status, 'status')}</span>
+            <span class="count">${ticket.scannedCount || 1}/${ticket.quantity}</span>
+            <span class="time">${new Date(ticket.timestamp).toLocaleTimeString()}</span>
+          </div>
         `;
-    }).join("");
-    
-    if (filtered.length === 0) {
+      }).join("");
+      
+      if (filtered.length === 0) {
         scanHistory.innerHTML = '<div class="no-results">No matching scans found</div>';
+      }
     }
-}
-
-// Update the updateScanHistory function to accept optional filter
-function updateScanHistory(filter = '') {
-    if (filter) {
-        filterScans(filter);
-        return;
-    }
-    
-    scanHistory.innerHTML = scannedTickets.slice(0, 5).map(ticket => `
-        <div class="scan-item ${ticket.status}">
-            <span class="order-number">${ticket.order_number}</span>
-            <span class="name">${ticket.first_name}</span>
-            <span class="product">${ticket.prod_title}</span>
-            <span class="status">${ticket.status}</span>
-            <span class="time">${new Date(ticket.timestamp).toLocaleTimeString()}</span>
-        </div>
-    `).join("");
-}
-
-// Add event listeners for search
-scanSearch.addEventListener('input', (e) => {
-    filterScans(e.target.value);
-});
-
-clearSearch.addEventListener('click', () => {
-    scanSearch.value = '';
-    updateScanHistory();
-});
-
-clearScans.addEventListener('click', () => {
-    scanSearch.value = '';
-    localStorage.removeItem("scannedTickets")
-    window.location.href = window.location.href;
-})
-
-// Add this to your initialization
-scanSearch.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        scanSearch.value = '';
-        updateScanHistory();
-    }
-});
-
-// Update the updateScanHistory function to accept optional filter
-function updateScanHistory(filter = '') {
-    if (filter) {
-        filterScans(filter);
-        return;
-    }
-    
-    scanHistory.innerHTML = scannedTickets.slice(0, 5).map(ticket => `
-        <div class="scan-item ${ticket.status}">
-            <span class="order-number">${ticket.order_number}</span>
-            <span class="name">${ticket.first_name}</span>
-            <span class="product">${ticket.prod_title}</span>
-            <span class="status">${ticket.status}</span>
-            <span class="time">${new Date(ticket.timestamp).toLocaleTimeString()}</span>
-        </div>
-    `).join("");
-}
-
-// Add event listeners for search
-scanSearch.addEventListener('input', (e) => {
-    filterScans(e.target.value);
-});
-
-clearSearch.addEventListener('click', () => {
-    scanSearch.value = '';
-    updateScanHistory();
-});
-
-// Add this to your initialization
-scanSearch.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        scanSearch.value = '';
-        updateScanHistory();
-    }
-});
   
-  // Show current ticket info
-  function showTicketInfo(order) {
+    // Enhanced ticket info display with quantity tracking
+    function showTicketInfo(order) {
+      const isSpecialTicket = ['complimentary', 'mpesa'].includes(order.order_number.toLowerCase());
+      const trackingKey = isSpecialTicket 
+        ? `${order.first_name}_${order.order_number}`
+        : order.order_number;
+      
+      const ordersMap = getScansByOrderNumber();
+      const orderData = ordersMap.get(trackingKey);
+      
+      // Set default quantity if not provided
+      order.quantity = order.quantity || 1;
+      
+      // Update counts based on existing scans
+      const currentScans = orderData ? orderData.scans.length : 0;
+      order.scannedCount = currentScans;
+      order.status = (orderData && orderData.fulfilled) ? 'fulfilled' : 'unfulfilled';
+      
       currentOrder = order;
       ticketDetails.innerHTML = `
-          <p><strong>Order:</strong> ${order.order_number}</p>
-          <p><strong>Name:</strong> ${order.first_name}</p>
-          <p><strong>Product:</strong> ${order.prod_title}</p>
-          <p><strong>Quantity:</strong> ${order.quantity}</p>
-          <p><strong>Status:</strong> <span class="status-${order.status.toLowerCase()}">${order.status}</span></p>
-          ${order.status === 'fulfilled' ? '<p class="notice">This ticket is already fulfilled. Mark attendance for additional guests.</p>' : ''}
+        <p><strong>Order:</strong> ${order.order_number}</p>
+        ${isSpecialTicket ? `<p><strong>Guest:</strong> ${order.first_name}</p>` : ''}
+        <p><strong>Product:</strong> ${order.prod_title}</p>
+        <p><strong>Quantity:</strong> ${order.quantity}</p>
+        <p><strong>Scanned:</strong> ${currentScans}/${order.quantity}</p>
+        <p><strong>Status:</strong> <span class="status-${order.status.toLowerCase()}">${order.status}</span></p>
+        ${currentScans >= order.quantity ? 
+         '<p class="notice warning">This ticket is fully redeemed.</p>' : 
+         order.status === 'fulfilled' ? 
+         '<p class="notice">Marking additional attendance.</p>' : ''}
       `;
       
-      // Always show count for orders with quantity > 1
-      if (order.quantity > 1) {
-          scannedCount.textContent = order.scannedCount || (order.status === 'fulfilled' ? order.quantity : 1);
-          totalCount.textContent = order.quantity;
-          ticketCount.classList.remove("hidden");
-      } else {
-          ticketCount.classList.add("hidden");
-      }
+      // Update count display
+      scannedCount.textContent = currentScans;
+      totalCount.textContent = order.quantity;
+      ticketCount.classList.remove("hidden");
       
-      // Update button text and behavior based on status
-      if (order.status === 'fulfilled') {
-          processBtn.textContent = 'Mark Attendance';
-          processBtn.classList.remove('btn-success');
-          processBtn.classList.add('btn-primary');
+      // Update button state based on scan count
+      if (currentScans >= order.quantity) {
+        processBtn.disabled = true;
+        processBtn.textContent = 'Fully Redeemed';
+        processBtn.classList.remove('btn-success', 'btn-primary');
+        processBtn.classList.add('btn-secondary');
+      } else if (order.status === 'fulfilled') {
+        processBtn.disabled = false;
+        processBtn.textContent = 'Mark Attendance';
+        processBtn.classList.remove('btn-success', 'btn-secondary');
+        processBtn.classList.add('btn-primary');
       } else {
-          processBtn.textContent = 'Fulfill Order';
-          processBtn.classList.remove('btn-primary');
-          processBtn.classList.add('btn-success');
+        processBtn.disabled = false;
+        processBtn.textContent = 'Fulfill Order';
+        processBtn.classList.remove('btn-primary', 'btn-secondary');
+        processBtn.classList.add('btn-success');
       }
-      
-      // Always show cancel button
-      cancelBtn.style.display = 'inline-block';
       
       currentTicket.classList.remove("hidden");
-  }
+    }
   
-  // Update status display
-  function updateStatus(status, message) {
+    // Update status display
+    function updateStatus(status, message) {
       statusIndicator.className = `indicator ${status}`;
       statusText.textContent = message;
-  }
+    }
   
-  // Play sound feedback
-  function playSound(type) {
+    // Play sound feedback
+    function playSound(type) {
       if (type === 'success') {
-          successSound.currentTime = 0;
-          successSound.play();
+        successSound.currentTime = 0;
+        successSound.play();
       } else {
-          errorSound.currentTime = 0;
-          errorSound.play();
+        errorSound.currentTime = 0;
+        errorSound.play();
       }
-  }
+    }
   
-  // Process order fulfillment or attendance marking
-function processTicket() {
-    if (!currentOrder) return;
-    
-    updateStatus('processing', 'Processing...');
-    // Check if this is a special ticket type (complimentary or mpesa)
-    const isSpecialTicket = ['complimentary', 'mpesa'].includes(currentOrder.order_number.toLowerCase());
-    
-    // For special tickets, we'll just mark attendance without API call
-    if (isSpecialTicket) {
-        // Create scan record
+    // Enhanced scan processing with quantity validation
+    function processTicket() {
+      if (!currentOrder) return;
+      
+      const isSpecialTicket = ['complimentary', 'mpesa'].includes(currentOrder.order_number.toLowerCase());
+      const trackingKey = isSpecialTicket 
+        ? `${currentOrder.first_name}_${currentOrder.order_number}`
+        : currentOrder.order_number;
+      
+      const ordersMap = getScansByOrderNumber();
+      const orderData = ordersMap.get(trackingKey);
+      const currentScans = orderData ? orderData.scans.length : 0;
+      
+      // Validate against quantity
+      if (currentScans >= currentOrder.quantity) {
+        playSound('error');
+        updateStatus('error', `Maximum scans (${currentOrder.quantity}) reached`);
+        return;
+      }
+      
+      updateStatus('processing', 'Processing...');
+      
+      // Unified processing for all ticket types
+      const processScan = () => {
+        const isAlreadyFulfilled = currentOrder.status === 'fulfilled';
         const scanRecord = {
-            ...currentOrder,
-            status: 'fulfilled',
-            timestamp: new Date().toISOString(),
-            action: 'attendance'
+          ...currentOrder,
+          status: 'fulfilled',
+          scannedCount: currentScans + 1,
+          timestamp: new Date().toISOString(),
+          action: isAlreadyFulfilled ? 'attendance' : 'fulfillment',
+          quantity: currentOrder.quantity || 1
         };
         
         // Add to scan history
@@ -249,284 +257,175 @@ function processTicket() {
         localStorage.setItem("scannedTickets", JSON.stringify(scannedTickets));
         
         playSound('success');
-        updateStatus('success', 'Attendance marked!');
-        updateScanHistory();
         
-        setTimeout(() => {
+        // Update display counts
+        const newCount = currentScans + 1;
+        const remaining = currentOrder.quantity - newCount;
+        
+        if (remaining > 0) {
+          updateStatus('success', `Accepted (${newCount}/${currentOrder.quantity})`);
+          showTicketInfo(currentOrder);
+        } else {
+          updateStatus('success', 'Fully redeemed!');
+          setTimeout(() => {
             currentTicket.classList.add("hidden");
             updateStatus('ready', 'Ready to scan next ticket');
-        }, 1500);
+          }, 1500);
+        }
         
+        updateScanHistory();
+      };
+      
+      // Special tickets don't need API calls
+      if (isSpecialTicket) {
+        processScan();
         return;
-    }
-    
-    // Normal ticket processing
-    const isAlreadyFulfilled = currentOrder.status === 'fulfilled';
-    const endpoint = isAlreadyFulfilled ? 
+      }
+      
+      // Normal tickets use API
+      const isAlreadyFulfilled = currentOrder.status === 'fulfilled';
+      const endpoint = isAlreadyFulfilled ? 
         'https://adverteyez.onrender.com/create_ticket_attendance' : 
         'https://adverteyez.onrender.com/fulfill_order';
-    
-    const requestOptions = {
+      
+      fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-            order_id: currentOrder.order_id,
-            first_name: `${currentOrder.first_name} ${currentOrder.lastname}`,
-            order_number: currentOrder.order_number,
-            quantity: currentOrder.quantity,
-            prod_title: currentOrder.prod_title,
-            status: "fulfilled"
+          order_id: currentOrder.order_id,
+          first_name: `${currentOrder.first_name} ${currentOrder.lastname}`,
+          order_number: currentOrder.order_number,
+          quantity: currentOrder.quantity,
+          prod_title: currentOrder.prod_title,
+          status: "fulfilled"
         })
-    };
-    
-    fetch(endpoint, requestOptions)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success || (data.details && data.details.fulfillment)) {
-                playSound('success');
-                
-                // Update order status
-                currentOrder.status = 'fulfilled';
-                
-                // Update scanned count
-                if (data.details) {
-                    currentOrder.scannedCount = data.details.fulfilled;
-                } else {
-                    currentOrder.scannedCount = (currentOrder.scannedCount || 0) + 1;
-                }
-                
-                // Add to scan history
-                const scanRecord = {
-                    ...currentOrder,
-                    timestamp: new Date().toISOString(),
-                    action: isAlreadyFulfilled ? 'attendance' : 'fulfillment'
-                };
-                scannedTickets.unshift(scanRecord);
-                localStorage.setItem("scannedTickets", JSON.stringify(scannedTickets));
-                
-                updateStatus('success', isAlreadyFulfilled ? 'Attendance marked!' : 'Order fulfilled!');
-                updateScanHistory();
-                
-                // For fulfilled orders with remaining quantity, keep the ticket visible
-                if (currentOrder.quantity > 1 && currentOrder.scannedCount < currentOrder.quantity) {
-                    showTicketInfo(currentOrder);
-                    updateStatus('ready', `Scan next ticket (${currentOrder.scannedCount}/${currentOrder.quantity})`);
-                } else {
-                    setTimeout(() => {
-                        currentTicket.classList.add("hidden");
-                        updateStatus('ready', 'Ready to scan next ticket');
-                    }, 1500);
-                }
-            } else {
-                playSound('error');
-                updateStatus('error', data.message || 'Processing failed');
-                // Keep the ticket visible so user can try again
-                showTicketInfo(currentOrder);
-            }
-        })
-        .catch(error => {
-            playSound('error');
-            console.error("Request failed:", error);
-            updateStatus('error', "Network error");
-            // Keep the ticket visible so user can try again
-            showTicketInfo(currentOrder);
-        });
-}
-//   function processTicket() {
-//       if (!currentOrder) return;
-      
-//       updateStatus('processing', 'Processing...');
-      
-//       const isAlreadyFulfilled = currentOrder.status === 'fulfilled';
-//       const endpoint = isAlreadyFulfilled ? 
-//           'https://adverteyez.onrender.com/create_ticket_attendance' : 
-//           'https://adverteyez.onrender.com/fulfill_order';
-      
-//       const requestOptions = {
-//           method: "POST",
-//           headers: { "Content-Type": "application/json" },
-//           body: JSON.stringify({ 
-//               order_id: currentOrder.order_id,
-//               first_name: `${currentOrder.first_name} ${currentOrder.lastname}`,
-//               order_number: currentOrder.order_number,
-//               quantity: currentOrder.quantity,
-//               prod_title: currentOrder.prod_title,
-//               status: "fulfilled"
-//           })
-//       };
-      
-//       fetch(endpoint, requestOptions)
-//           .then(response => response.json())
-//           .then(data => {
-//               if (data.success || (data.details && data.details.fulfillment)) {
-//                   playSound('success');
-                  
-//                   // Update order status
-//                   currentOrder.status = 'fulfilled';
-                  
-//                   // Update scanned count
-//                   if (data.details) {
-//                       currentOrder.scannedCount = data.details.fulfilled;
-//                   } else {
-//                       currentOrder.scannedCount = (currentOrder.scannedCount || 0) + 1;
-//                   }
-                  
-//                   // Add to scan history
-//                   const scanRecord = {
-//                       ...currentOrder,
-//                       timestamp: new Date().toISOString(),
-//                       action: isAlreadyFulfilled ? 'attendance' : 'fulfillment'
-//                   };
-//                   scannedTickets.unshift(scanRecord);
-//                   localStorage.setItem("scannedTickets", JSON.stringify(scannedTickets));
-                  
-//                   updateStatus('success', isAlreadyFulfilled ? 'Attendance marked!' : 'Order fulfilled!');
-//                   updateScanHistory();
-                  
-//                   // For fulfilled orders with remaining quantity, keep the ticket visible
-//                   if (currentOrder.quantity > 1 && currentOrder.scannedCount < currentOrder.quantity) {
-//                       showTicketInfo(currentOrder);
-//                       updateStatus('ready', `Scan next ticket (${currentOrder.scannedCount}/${currentOrder.quantity})`);
-//                   } else {
-//                       setTimeout(() => {
-//                           currentTicket.classList.add("hidden");
-//                           updateStatus('ready', 'Ready to scan next ticket');
-//                       }, 1500);
-//                   }
-//               } else {
-//                   playSound('error');
-//                   updateStatus('error', data.message || 'Processing failed');
-//                   // Keep the ticket visible so user can try again
-//                   showTicketInfo(currentOrder);
-//               }
-//           })
-//           .catch(error => {
-//               playSound('error');
-//               console.error("Request failed:", error);
-//               updateStatus('error', "Network error");
-//               // Keep the ticket visible so user can try again
-//               showTicketInfo(currentOrder);
-//           });
-//   }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success || (data.details && data.details.fulfillment)) {
+          processScan();
+        } else {
+          throw new Error(data.message || 'Processing failed');
+        }
+      })
+      .catch(error => {
+        playSound('error');
+        console.error("Request failed:", error);
+        updateStatus('error', error.message || "Network error");
+        showTicketInfo(currentOrder);
+      });
+    }
   
-  // Cancel current operation
-  function cancelOperation() {
+    // Cancel current operation
+    function cancelOperation() {
       currentTicket.classList.add("hidden");
       updateStatus('ready', 'Ready to scan');
-  }
+    }
   
-  // Button event listeners
-  processBtn.addEventListener('click', processTicket);
-  cancelBtn.addEventListener('click', cancelOperation);
-  
-  // QR Code Scanner
-  function onScanSuccess(decodeText, decodeResult) {
-    console.log("QR code data:", decodeText, decodeResult);
-    
-    const orderId = decodeText.match(/Order ID:\s*(\d+)/)?.[1];
-    const orderNumber = decodeText.match(/Order Number:\s*([a-zA-Z0-9]+)/)?.[1];
-    const firstName = decodeText.match(/First Name:\s*([a-zA-Z\s]+)/)?.[1];
-    const lastname = decodeText.match(/Last Name:\s*([a-zA-Z\s]+)/)?.[1];
-    const quantity = parseInt(decodeText.match(/Quantity:\s*([a-zA-Z0-9]+)/)?.[1]) || 1;
-    const prod_title = decodeText.match(/Product Title:\s*([a-zA-Z0-9\s]+)/)?.[1];
-    const productId = decodeText.match(/Product ID:\s*(\d+)/)?.[1];
-    
-    // Check if this is a special ticket type
-    const lowerOrderNumber = orderNumber ? orderNumber.toLowerCase() : '';
-    const isSpecialTicket = ['mpesa', 'complimentary'].includes(lowerOrderNumber);
-    
-    if (isSpecialTicket || (orderId && orderNumber && productId)) {
-        updateStatus('scanned', 'Ticket scanned');
-        
-        // Check if this order was already scanned
-        const existingScan = scannedTickets.find(t => t.order_number === orderNumber);
-        let status = isSpecialTicket ? 'fulfilled' : 'unfulfilled';
-        let scannedCount = 0;
-        
-        if (existingScan) {
-            status = existingScan.status;
-            scannedCount = existingScan.scannedCount || 1;
-        }
-        
-        // Create order object
-        const order = {
-            order_id: orderId || 'N/A',
-            order_number: orderNumber,
-            first_name: firstName || 'Guest',
-            lastname: lastname || '',
-            quantity: quantity,
-            prod_title: prod_title || 'Special Ticket',
-            product_id: productId || 'N/A',
-            status: status,
-            scannedCount: scannedCount
-        };
-        
-        showTicketInfo(order);
-    } else {
+    // Enhanced QR code scanning with quantity validation
+    function onScanSuccess(decodeText, decodeResult) {
+      console.log("QR code data:", decodeText, decodeResult);
+      
+      // Parse QR code data
+      const orderId = decodeText.match(/Order ID:\s*(\d+)/)?.[1];
+      const orderNumber = decodeText.match(/Order Number:\s*([a-zA-Z0-9]+)/)?.[1];
+      const firstName = decodeText.match(/First Name:\s*([a-zA-Z\s]+)/)?.[1];
+      const lastname = decodeText.match(/Last Name:\s*([a-zA-Z\s]+)/)?.[1];
+      const quantity = parseInt(decodeText.match(/Quantity:\s*(\d+)/)?.[1]) || 1;
+      const prod_title = decodeText.match(/Product Title:\s*([a-zA-Z0-9\s\-]+)/)?.[1];
+      const productId = decodeText.match(/Product ID:\s*(\d+)/)?.[1];
+      
+      // Validate ticket
+      const lowerOrderNumber = orderNumber ? orderNumber.toLowerCase() : '';
+      const isSpecialTicket = ['mpesa', 'complimentary'].includes(lowerOrderNumber);
+      
+      // Special validation for complimentary tickets
+      if (isSpecialTicket && !firstName) {
+        playSound('error');
+        updateStatus('error', 'Complimentary tickets require guest name');
+        setTimeout(() => updateStatus('ready', 'Ready to scan'), 2000);
+        return;
+      }
+      
+      // Validate regular tickets
+      if (!isSpecialTicket && (!orderId || !orderNumber || !productId)) {
         playSound('error');
         updateStatus('error', 'Invalid ticket format');
         setTimeout(() => updateStatus('ready', 'Ready to scan'), 2000);
+        return;
+      }
+      
+      updateStatus('scanned', 'Ticket scanned');
+      
+      // Create tracking key
+      const trackingKey = isSpecialTicket 
+        ? `${firstName}_${orderNumber}`
+        : orderNumber;
+      
+      const ordersMap = getScansByOrderNumber();
+      const orderData = ordersMap.get(trackingKey);
+      const currentScans = orderData ? orderData.scans.length : 0;
+      
+      // Create order object
+      const order = {
+        order_id: orderId || 'N/A',
+        order_number: orderNumber,
+        first_name: firstName || 'Guest',
+        lastname: lastname || '',
+        quantity: quantity,
+        prod_title: prod_title || (isSpecialTicket ? 'Special Ticket' : 'Unknown'),
+        product_id: productId || 'N/A',
+        status: isSpecialTicket ? 'fulfilled' : 'unfulfilled',
+        scannedCount: currentScans
+      };
+      
+      // Check if already fully redeemed
+      if (currentScans >= quantity) {
+        playSound('error');
+        updateStatus('error', `Ticket already redeemed ${quantity}/${quantity} times`);
+        setTimeout(() => updateStatus('ready', 'Ready to scan'), 2000);
+        return;
+      }
+      
+      showTicketInfo(order);
     }
-}
-//   function onScanSuccess(decodeText, decodeResult) {
-//       console.log("QR code data:", decodeText, decodeResult);
-      
-//       const orderId = decodeText.match(/Order ID:\s*(\d+)/)?.[1];
-//       const orderNumber = decodeText.match(/Order Number:\s*([a-zA-Z0-9]+)/)?.[1];
-//       const firstName = decodeText.match(/First Name:\s*([a-zA-Z\s]+)/)?.[1];
-//       const lastname = decodeText.match(/Last Name:\s*([a-zA-Z\s]+)/)?.[1];
-//       const quantity = parseInt(decodeText.match(/Quantity:\s*([a-zA-Z0-9]+)/)?.[1]) || 1;
-//       const prod_title = decodeText.match(/Product Title:\s*([a-zA-Z0-9\s]+)/)?.[1];
-//       const productId = decodeText.match(/Product ID:\s*(\d+)/)?.[1];
-      
-//       if (orderId && orderNumber && productId) {
-//           updateStatus('scanned', 'Ticket scanned');
-          
-//           // Check if this order was already scanned
-//           const existingScan = scannedTickets.find(t => t.order_id === orderId);
-//           let status = 'unfulfilled';
-//           let scannedCount = 0;
-          
-//           if (existingScan) {
-//               status = existingScan.status;
-//               scannedCount = existingScan.scannedCount || 1;
-//           }
-          
-//           // Check if this is a special ticket type
-//           const lowerOrderNumber = orderNumber.toLowerCase();
-//           if (lowerOrderNumber === 'mpesa' || lowerOrderNumber === 'complimentary') {
-//               status = 'fulfilled';
-//           }
-          
-//           // Create order object
-//           const order = {
-//               order_id: orderId,
-//               order_number: orderNumber,
-//               first_name: firstName,
-//               lastname: lastname,
-//               quantity: quantity,
-//               prod_title: prod_title,
-//               product_id: productId,
-//               status: status,
-//               scannedCount: scannedCount
-//           };
-          
-//           showTicketInfo(order);
-//       } else {
-//           playSound('error');
-//           updateStatus('error', 'Invalid ticket format');
-//           setTimeout(() => updateStatus('ready', 'Ready to scan'), 2000);
-//       }
-//   }
   
-  // Initialize scanner
-  let htmlscanner = new Html5QrcodeScanner("my-qr-reader", { 
+    // Event listeners
+    processBtn.addEventListener('click', processTicket);
+    cancelBtn.addEventListener('click', cancelOperation);
+    
+    scanSearch.addEventListener('input', (e) => {
+      filterScans(e.target.value);
+    });
+  
+    clearSearch.addEventListener('click', () => {
+      scanSearch.value = '';
+      updateScanHistory();
+    });
+  
+    clearScans.addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear all scan history?')) {
+        localStorage.removeItem("scannedTickets");
+        scannedTickets = [];
+        updateScanHistory();
+        currentTicket.classList.add("hidden");
+        updateStatus('ready', 'Ready to scan');
+      }
+    });
+  
+    scanSearch.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        scanSearch.value = '';
+        updateScanHistory();
+      }
+    });
+  
+    // Initialize scanner and UI
+    updateScanHistory();
+    const htmlscanner = new Html5QrcodeScanner("my-qr-reader", { 
       fps: 10, 
       qrbox: 250,
       supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+    });
+    htmlscanner.render(onScanSuccess);
   });
-  
-  // Initialize UI
-  updateScanHistory();
-  htmlscanner.render(onScanSuccess);
-});

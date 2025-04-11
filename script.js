@@ -231,7 +231,7 @@ function processTicket() {
     if (!currentOrder) return;
     
     updateStatus('processing', 'Processing...');
-    
+    alert(currentOrder.order_number)
     // Check if this is a special ticket type (complimentary or mpesa)
     const isSpecialTicket = ['complimentary', 'mpesa'].includes(currentOrder.order_number.toLowerCase());
     

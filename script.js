@@ -335,8 +335,8 @@ function domReady(fn) {
       const quantity = parseInt(decodeText.match(/Quantity:\s*(\d+)/)?.[1]) || 1;
       const prod_title = decodeText.match(/Product Title:\s*([a-zA-Z0-9\s\-]+)/)?.[1];
       const productId = decodeText.match(/Product ID:\s*(\d+)/)?.[1];
-      const seats = decodeText.match(/Seats:\s*([a-zA-Z0-9\s\-]+)/);
-      const ticket = decodeText.match(/Ticket:\s*([a-zA-Z0-9\s\-]+)/)
+      const seats = decodeText.match(/Seats:\s*([^\n]+)/)?.[1] || 'N/A';
+      const ticket = decodeText.match(/Ticket:\s*([^\n]+)/)?.[1] || 'N/A';
       
       // Validate ticket
       const lowerOrderNumber = orderNumber ? orderNumber.toLowerCase() : '';
@@ -378,8 +378,8 @@ function domReady(fn) {
         quantity: quantity,
         prod_title: prod_title || (isSpecialTicket ? 'Special Ticket' : 'Unknown'),
         product_id: productId || 'N/A',
-        seats: seats || 'N/A',
-        ticket: ticket || 'N/A',
+        seats: seats,
+        ticket: ticket,
         status: isSpecialTicket ? 'fulfilled' : 'unfulfilled',
         scannedCount: currentScans
       };

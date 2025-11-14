@@ -169,6 +169,7 @@ function domReady(fn) {
         <p><strong>Quantity:</strong> ${order.quantity}</p>
         <p><strong>Scanned:</strong> ${currentScans}/${order.quantity}</p>
         <p><strong>Status:</strong> <span class="status-${order.status.toLowerCase()}">${order.status}</span></p>
+        <p><strong>Seats:</strong> ${order.seats} / ${order.ticket}</p>
         ${currentScans >= order.quantity ? 
          '<p class="notice warning">This ticket is fully redeemed.</p>' : 
          order.status === 'fulfilled' ? 
@@ -334,6 +335,8 @@ function domReady(fn) {
       const quantity = parseInt(decodeText.match(/Quantity:\s*(\d+)/)?.[1]) || 1;
       const prod_title = decodeText.match(/Product Title:\s*([a-zA-Z0-9\s\-]+)/)?.[1];
       const productId = decodeText.match(/Product ID:\s*(\d+)/)?.[1];
+      const seats = decodeText.match(/Seats:\s*([a-zA-Z0-9\s\-]+)/);
+      const ticket = decodeText.match(/Ticket:\s*([a-zA-Z0-9\s\-]+)/)
       
       // Validate ticket
       const lowerOrderNumber = orderNumber ? orderNumber.toLowerCase() : '';
@@ -375,6 +378,8 @@ function domReady(fn) {
         quantity: quantity,
         prod_title: prod_title || (isSpecialTicket ? 'Special Ticket' : 'Unknown'),
         product_id: productId || 'N/A',
+        seats: seats || 'N/A',
+        ticket: ticket || 'N/A',
         status: isSpecialTicket ? 'fulfilled' : 'unfulfilled',
         scannedCount: currentScans
       };

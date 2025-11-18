@@ -34,7 +34,7 @@ function domReady(fn) {
       
       scannedTickets.forEach(scan => {
         // Use composite key for special tickets (firstname + order_number)
-        const isSpecialTicket = ['complimentary', 'mpesa'].includes(scan.order_number.toLowerCase());
+        const isSpecialTicket = ['complimentary', 'mpesa','sponsors'].includes(scan.order_number.toLowerCase());
         const trackingKey = isSpecialTicket 
           ? `${scan.first_name}_${scan.order_number}` 
           : scan.order_number;

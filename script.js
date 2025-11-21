@@ -27,6 +27,8 @@ function domReady(fn) {
     // State management
     let currentOrder = null;
     let scannedTickets = JSON.parse(localStorage.getItem("scannedTickets")) || [];
+    // Shared list of special ticket order numbers (lowercase)
+    const SPECIAL_TICKETS = ['complimentary', 'mpesa', 'sponsors', 'sfa-c'];
   
     // Enhanced scan grouping with special ticket handling
     function getScansByOrderNumber() {
@@ -34,7 +36,7 @@ function domReady(fn) {
       
       scannedTickets.forEach(scan => {
         // Use composite key for special tickets (firstname + order_number)
-        const isSpecialTicket = ['complimentary', 'mpesa','sponsors','sfa-c'].includes(scan.order_number.toLowerCase());
+        const isSpecialTicket = scan.order_number && SPECIAL_TICKETS.includes(scan.order_number.toLowerCase());
         const trackingKey = isSpecialTicket 
           ? `${scan.first_name}_${scan.order_number}` 
           : scan.order_number;
@@ -145,7 +147,7 @@ function domReady(fn) {
   
     // Enhanced ticket info display with quantity tracking
     function showTicketInfo(order) {
-      const isSpecialTicket = ['complimentary', 'mpesa','sponsors','sfa-c'].includes(order.order_number.toLowerCase());
+      const isSpecialTicket = order.order_number && SPECIAL_TICKETS.includes(order.order_number.toLowerCase());
       const trackingKey = isSpecialTicket 
         ? `${order.first_name}_${order.order_number}`
         : order.order_number;
@@ -223,7 +225,7 @@ function domReady(fn) {
     function processTicket() {
       if (!currentOrder) return;
       
-      const isSpecialTicket = ['complimentary', 'mpesa','sponsors','sfa-c'].includes(currentOrder.order_number.toLowerCase());
+      const isSpecialTicket = currentOrder.order_number && SPECIAL_TICKETS.includes(currentOrder.order_number.toLowerCase());
       const trackingKey = isSpecialTicket 
         ? `${currentOrder.first_name}_${currentOrder.order_number}`
         : currentOrder.order_number;
@@ -329,7 +331,7 @@ function domReady(fn) {
       
       // Parse QR code data
       const orderId = decodeText.match(/Order ID:\s*(\d+)/)?.[1];
-      const orderNumber = decodeText.match(/Order Number:\s*([a-zA-Z0-9]+)/)?.[1];
+      const orderNumber = decodeText.match(/Order Number:\s*([A-Za-z0-9_\-]+)/)?.[1];
       const firstName = decodeText.match(/First Name:\s*([a-zA-Z\s]+)/)?.[1];
       const lastname = decodeText.match(/Last Name:\s*([a-zA-Z\s]+)/)?.[1];
       const quantity = parseInt(decodeText.match(/Quantity:\s*(\d+)/)?.[1]) || 1;
@@ -340,7 +342,7 @@ function domReady(fn) {
       
       // Validate ticket
       const lowerOrderNumber = orderNumber ? orderNumber.toLowerCase() : '';
-      const isSpecialTicket = ['mpesa', 'complimentary'].includes(lowerOrderNumber);
+      const isSpecialTicket = SPECIAL_TICKETS.includes(lowerOrderNumber);
       
       // Special validation for complimentary tickets
       if (isSpecialTicket && !firstName) {

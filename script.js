@@ -34,7 +34,7 @@ function domReady(fn) {
       
       scannedTickets.forEach(scan => {
         // Use composite key for special tickets (firstname + order_number)
-        const isSpecialTicket = ['complimentary', 'mpesa','sponsors'].includes(scan.order_number.toLowerCase());
+        const isSpecialTicket = ['complimentary', 'mpesa','sponsors','sfa-c'].includes(scan.order_number.toLowerCase());
         const trackingKey = isSpecialTicket 
           ? `${scan.first_name}_${scan.order_number}` 
           : scan.order_number;
@@ -145,7 +145,7 @@ function domReady(fn) {
   
     // Enhanced ticket info display with quantity tracking
     function showTicketInfo(order) {
-      const isSpecialTicket = ['complimentary', 'mpesa'].includes(order.order_number.toLowerCase());
+      const isSpecialTicket = ['complimentary', 'mpesa','sponsors','sfa-c'].includes(order.order_number.toLowerCase());
       const trackingKey = isSpecialTicket 
         ? `${order.first_name}_${order.order_number}`
         : order.order_number;
@@ -223,7 +223,7 @@ function domReady(fn) {
     function processTicket() {
       if (!currentOrder) return;
       
-      const isSpecialTicket = ['complimentary', 'mpesa'].includes(currentOrder.order_number.toLowerCase());
+      const isSpecialTicket = ['complimentary', 'mpesa','sponsors','sfa-c'].includes(currentOrder.order_number.toLowerCase());
       const trackingKey = isSpecialTicket 
         ? `${currentOrder.first_name}_${currentOrder.order_number}`
         : currentOrder.order_number;
